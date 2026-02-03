@@ -12,6 +12,7 @@ struct SigninView: View {
     @State var email = ""
     @State var password = ""
     @State var isLoading = false
+    @Binding var showModal: Bool
     let check = RiveViewModel(fileName: "check", stateMachineName: "State Machine 1")
     let confetti = RiveViewModel(fileName: "confetti", stateMachineName: "State Machine 1")
     
@@ -24,6 +25,11 @@ struct SigninView: View {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 confetti.triggerInput("Trigger explosion")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                withAnimation {
+                    showModal = false
+                }
             }
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -120,5 +126,5 @@ struct SigninView: View {
 }
 
 #Preview {
-    SigninView()
+    SigninView(showModal: .constant(true))
 }
