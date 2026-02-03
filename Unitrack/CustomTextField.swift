@@ -7,12 +7,29 @@
 
 import SwiftUI
 
-struct CustomTextField: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+struct CustomTextField: ViewModifier {
+    var image: Image
+    func body(content: Content) -> some View {
+        content
+            .customFont(.headline)
+            .padding(15)
+            .padding(.leading, 36)
+            .background(.white)
+            .mask(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke()
+                .fill(.black.opacity(0.2))
+            )
+            .overlay(
+                image
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 8)
+            )
     }
 }
 
-#Preview {
-    CustomTextField()
+extension View {
+    func customTextField(image: Image = Image("Icon Email")) -> some View {
+        modifier(CustomTextField(image: image))
+    }
 }

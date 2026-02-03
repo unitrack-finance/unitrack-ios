@@ -20,7 +20,7 @@ struct OnboardingView: View {
                     .font(.custom("Outfit SemiBold", size: 60, relativeTo: .largeTitle))
                     .frame(width: 260, alignment: .leading)
                 
-                Text("Unitrack unifies tracking: real-time updates, custom real estate/fixed-income entries, alerts, premium risk analysis. One portfolio to track them all.")
+                Text("Unitrack unifies portfolio tracking: real-time updates, custom real estate/fixed-income entries, alerts, premium risk analysis. One portfolio to track them all.")
                     .customFont(.body)
                     .opacity(0.7)
                     .frame(maxWidth: .infinity, alignment: .leading)

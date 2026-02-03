@@ -11,9 +11,9 @@ struct CustomFont: ViewModifier {
     var textStyle: TextStyle
     var name: String {
         switch textStyle {
-        case .title:
+        case .title, .largeTitle:
             return "Outfit SemiBold"
-        case .footnote:
+        case .footnote, .headline, .subheadline:
             return "Outfit Regular"
         default:
             return "Outfit Regular"
@@ -23,6 +23,12 @@ struct CustomFont: ViewModifier {
         switch textStyle {
         case .title:
             return 24
+        case .largeTitle:
+            return 28
+        case .headline:
+            return 16
+        case .subheadline:
+            return 14
         case .footnote:
             return 12
         default:
@@ -33,6 +39,12 @@ struct CustomFont: ViewModifier {
         switch textStyle {
         case .title:
             return .title
+        case .largeTitle:
+            return .largeTitle
+        case .headline:
+            return .headline
+        case .subheadline:
+            return .subheadline
         case .footnote:
             return .footnote
         default:
@@ -55,4 +67,7 @@ enum TextStyle {
     case title
     case body
     case footnote
+    case largeTitle
+    case headline
+    case subheadline
 }
