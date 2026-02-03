@@ -6,11 +6,36 @@
 //
 
 import SwiftUI
+import RiveRuntime
 
 struct SigninView: View {
     @State var email = ""
     @State var password = ""
+    @State var isLoading = false
+    let check = RiveViewModel(fileName: "check", stateMachineName: "State Machine 1")
+    let confetti = RiveViewModel(fileName: "confetti", stateMachineName: "State Machine 1")
     
+    func logIn() {
+        isLoading = true
+        
+        if email != "" {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                check.triggerInput("Check")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                confetti.triggerInput("Trigger explosion")
+            }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                check.triggerInput("Error")
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                isLoading = false
+            }
+        }
+        
+        
+    }
     var body: some View {
         VStack(spacing: 24) {
             Text("Sign In")
@@ -35,11 +60,26 @@ struct SigninView: View {
                     .customTextField(image: Image("Icon Lock"))
             }
             
+            Button {
+                logIn()
+            } label: {
+                Label("Sign In", systemImage: "arrow.right")
+                    .customFont(.headline)
+                    .padding(20)
+                    .frame(maxWidth: .infinity)
+                    .background(Color(hex: "F77D8E"))
+                    .foregroundStyle(Color(.white))
+                    .cornerRadius(20, corners: [.topRight, .bottomLeft, .bottomRight])
+                    .cornerRadius(8, corners: .topLeft)
+                    .shadow(color: Color(hex: "F77D8E").opacity(0.5),
+                            radius: 20, x:0, y:10)
+            }
+            
             HStack {
                 Rectangle().frame(height: 1).opacity(0.3)
                 Text("OR")
                     .customFont(.subheadline)
-                    .foregroundColor(.black.opacity(0.3))
+                    .foregroundColor(.pink.opacity(0.3))
                 Rectangle().frame(height: 1).opacity(0.3)
             }
             Text("Sign up with Email, Apple or Google")
@@ -60,9 +100,21 @@ struct SigninView: View {
         .shadow(color: Color("Shadow").opacity(0.3), radius: 5, x: 0, y: 3)
         .shadow(color: Color("Shadow").opacity(0.3), radius: 30, x: 0, y: 30)
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-            .stroke(.linearGradient(colors: [.white.opacity(0.8), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .stroke(.linearGradient(colors: [.white.opacity(0.1), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
         )
         .padding()
+        .overlay(
+            ZStack {
+                if isLoading {
+                    check.view()
+                        .frame(width: 100, height: 100)
+                        .allowsHitTesting(false)
+                }
+                confetti.view()
+                    .scaleEffect(3)
+                    .allowsHitTesting(false)
+            }
+        )
 
     }
 }

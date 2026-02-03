@@ -32,7 +32,7 @@ struct CustomFont: ViewModifier {
         case .footnote:
             return 12
         default:
-            return 22
+            return 20
         }
     }
     var relative: Font.TextStyle {
