@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		7D09667D2F29E83D0077C907 /* unitrack-glass.icon in Resources */ = {isa = PBXBuildFile; fileRef = 7D09667C2F29E83D0077C907 /* unitrack-glass.icon */; };
-		7D5292972F30766100142264 /* CustomFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5292962F30766100142264 /* CustomFont.swift */; };
 		7D86D77E2F3047EA00F7F553 /* RiveRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 7D86D77D2F3047EA00F7F553 /* RiveRuntime */; };
 /* End PBXBuildFile section */
 
@@ -31,7 +30,6 @@
 
 /* Begin PBXFileReference section */
 		7D09667C2F29E83D0077C907 /* unitrack-glass.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "unitrack-glass.icon"; sourceTree = "<group>"; };
-		7D5292962F30766100142264 /* CustomFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomFont.swift; sourceTree = "<group>"; };
 		7D5A2A942F29CA8400D7BEAD /* Unitrack.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Unitrack.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D5A2AA52F29CA8900D7BEAD /* UnitrackTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitrackTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7D5A2AAF2F29CA8900D7BEAD /* UnitrackUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitrackUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -97,7 +95,6 @@
 		7D5A2A8B2F29CA8400D7BEAD = {
 			isa = PBXGroup;
 			children = (
-				7D5292962F30766100142264 /* CustomFont.swift */,
 				7D5A2A962F29CA8400D7BEAD /* Unitrack */,
 				7D5A2AA82F29CA8900D7BEAD /* UnitrackTests */,
 				7D5A2AB22F29CA8900D7BEAD /* UnitrackUITests */,
@@ -265,7 +262,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7D5292972F30766100142264 /* CustomFont.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

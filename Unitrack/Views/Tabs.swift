@@ -7,10 +7,37 @@
 
 import SwiftUI
 
+enum AppTabs {
+    case home, portfolio, profile, search
+}
+
 struct Tabs: View {
+    @State var selectedTab: AppTabs = .home
+    @State var searchText: String = ""
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+        TabView(selection: $selectedTab) {
+            Tab("Home", systemImage: "house", value: .home) {
+                Color.red.opacity(0.5).ignoresSafeArea()
+            }
+            Tab("Portfolio", systemImage: "clock", value: .portfolio) {
+                Color.pink.opacity(0.5).ignoresSafeArea()
+            }
+            Tab("Profile", systemImage: "gearshape", value: .profile) {
+                Color.purple.opacity(0.5).ignoresSafeArea()
+            }
+            
+            Tab(value: .search, role: .search) {
+                NavigationStack {
+                    List {
+                        Text("Search screen")
+                    }
+                    .navigationTitle("Search")
+                    .searchable(text: $searchText)
+                }
+            }
+           
+            
+        }    }
 }
 
 #Preview {
