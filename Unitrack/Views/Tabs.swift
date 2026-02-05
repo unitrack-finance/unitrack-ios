@@ -8,36 +8,27 @@
 import SwiftUI
 
 enum AppTabs {
-    case home, portfolio, profile, search
+    case dashboard, accounts, analytics, settings
 }
 
 struct Tabs: View {
-    @State var selectedTab: AppTabs = .home
-    @State var searchText: String = ""
+    @State var selectedTab: AppTabs = .dashboard
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house", value: .home) {
-                Color.red.opacity(0.5).ignoresSafeArea()
+            Tab("Dashboard", systemImage: "house", value: .dashboard) {
+                DashboardView()
             }
-            Tab("Portfolio", systemImage: "clock", value: .portfolio) {
-                Color.pink.opacity(0.5).ignoresSafeArea()
+            Tab("Accounts", systemImage: "link.circle.fill", value: .accounts) {
+                AccountsView()
             }
-            Tab("Profile", systemImage: "gearshape", value: .profile) {
-                Color.purple.opacity(0.5).ignoresSafeArea()
+            Tab("Analytics", systemImage: "chart.pie", value: .analytics) {
+                AnalyticsView()
             }
-            
-            Tab(value: .search, role: .search) {
-                NavigationStack {
-                    List {
-                        Text("Search screen")
-                    }
-                    .navigationTitle("Search")
-                    .searchable(text: $searchText)
-                }
+            Tab("Settings", systemImage: "gearshape", value: .settings) {
+                SettingsView()
             }
-           
-            
-        }    }
+        }
+    }
 }
 
 #Preview {
