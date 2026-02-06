@@ -7,15 +7,26 @@
 
 import SwiftUI
 
+// MARK: - Design System Colors
+extension Color {
+    static let cardBackground = Color(white: 0.11)
+    static let cardBackgroundSecondary = Color(white: 0.15)
+    static let accentGreen = Color(red: 0.7, green: 0.85, blue: 0.4)
+    static let textPrimary = Color.white
+    static let textSecondary = Color(white: 0.6)
+    static let textTertiary = Color(white: 0.45)
+}
+
 struct DashboardView: View {
     @State private var isSyncing = false
+    @State private var selectedTimeframe = "30 Days"
 
     private let allocation: [AllocationItem] = [
-        .init(name: "Stocks", value: 46, color: .blue, source: .plaid),
-        .init(name: "Crypto", value: 18, color: .purple, source: .manual),
-        .init(name: "Real Estate", value: 14, color: .orange, source: .manual),
-        .init(name: "Fixed Income", value: 12, color: .green, source: .plaid),
-        .init(name: "Cash", value: 10, color: .gray, source: .plaid)
+        .init(name: "Stocks", value: 46, color: Color(white: 0.85), source: .plaid),
+        .init(name: "Crypto", value: 18, color: Color(white: 0.55), source: .manual),
+        .init(name: "Real Estate", value: 14, color: Color(red: 0.55, green: 0.6, blue: 0.45), source: .manual),
+        .init(name: "Fixed Income", value: 12, color: Color(red: 0.7, green: 0.75, blue: 0.55), source: .plaid),
+        .init(name: "Cash", value: 10, color: Color(white: 0.35), source: .plaid)
     ]
 
     private let stats: [StatItem] = [
@@ -32,128 +43,214 @@ struct DashboardView: View {
         .init(name: "Gold Bars", source: "Manual Entry", value: "$4,980", change: "+0.4%", isPositive: true, icon: "circle.grid.cross.fill"),
         .init(name: "US Treasury", source: "Schwab", value: "$3,110", change: "+0.1%", isPositive: true, icon: "chart.bar.fill")
     ]
+    
+    private let portfolios: [Portfolio] = [
+        .init(name: "Metamask - ETH", balance: "$14,908"),
+        .init(name: "Coinbase", balance: "$100,400"),
+        .init(name: "Interactive Brokers", balance: "$14,500")
+    ]
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 16) {
                     headerSection
+                    portfolioOverviewCard
                     syncStatusBanner
                     allocationSection
                     quickStatsSection
                     holdingsSection
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 32)
+                .padding(.top, 8)
+                .padding(.bottom, 100)
             }
-            .navigationTitle("Dashboard")
-            .toolbar {
-                Button {
-                    withAnimation { isSyncing.toggle() }
-                } label: {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                }
-                .accessibilityLabel("Sync accounts")
-            }
+            .scrollIndicators(.hidden)
         }
     }
 }
 
+// MARK: - View Components
 private extension DashboardView {
+    
     var headerSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Total Portfolio")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text("$128,540")
-                        .font(.largeTitle.bold())
-                    HStack(spacing: 6) {
-                        Text("+$1,240 (0.97%)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.green)
-                        Text("24h")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Hi, Sylus!")
+                    .customFont(.title2)
+                  
+                Text(Date().formatted(.dateTime.day().month(.wide).year()))
+                    .customFont(.caption)
+                   
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 12) {
+                IconButton(icon: "gearshape", action: {})
+                IconButton(icon: "bell", action: {})
+                
+                Circle()
+                    .fill(Color.cardBackgroundSecondary)
+                    .frame(width: 40, height: 40)
+                    .overlay {
+                        Image(systemName: "person.fill")
+            
                     }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 6) {
-                    Label("Powered by Plaid", systemImage: "link.circle.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.blue)
-                    Text("Last sync 2h ago")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    }
+    
+    var portfolioOverviewCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Total Balance")
+                        .customFont(.caption)
+                      
+                    Text("$128,540")
+                        .customFont(.prominentTitle)
+                        
+                }
+                
+                Spacer()
+                
+                Menu {
+                    Button("7 Days") { selectedTimeframe = "7 Days" }
+                    Button("30 Days") { selectedTimeframe = "30 Days" }
+                    Button("90 Days") { selectedTimeframe = "90 Days" }
+                    Button("1 Year") { selectedTimeframe = "1 Year" }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedTimeframe)
+                            .customFont(.caption)
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                    }
+                  
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.textTertiary, lineWidth: 1)
+                    )
+                }
+            }
+            
+            HStack(spacing: 12) {
+                ChangeIndicator(value: "+$1,240", percentage: "+0.97%", isPositive: true)
+                Text("vs last month")
+                    .customFont(.caption)
+                   
+            }
+            
+            // Portfolio cards horizontal scroll
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(portfolios) { portfolio in
+                        NavigationLink(destination: PortfolioDetailView(portfolio: portfolio)) {
+                            MiniPortfolioCard(portfolio: portfolio)
+                        }
+                    }
+                }
+            }
+            
+            HStack {
+                Spacer()
+                Button(action: {
+                    print("Add Portfolio button tapped")
+                }) {
+                    Label("Add Portfolio", systemImage: "plus.circle.fill")
+                        .customFont(.body)
+                }
+                Spacer()
+            }
+            .padding(.top)
+        }
+        .padding(20)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     var syncStatusBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: isSyncing ? "arrow.triangle.2.circlepath.circle.fill" : "checkmark.seal.fill")
-                .foregroundStyle(isSyncing ? .orange : .green)
-            VStack(alignment: .leading, spacing: 4) {
+                .font(.title3)
+                .foregroundStyle(isSyncing ? .orange : .accentGreen)
+            
+            VStack(alignment: .leading, spacing: 2) {
                 Text(isSyncing ? "Syncing with Fidelity…" : "All accounts up to date")
-                    .font(.subheadline.weight(.semibold))
-                Text(isSyncing ? "Updating holdings" : "Last successful sync 2 hours ago")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .customFont(.subheadline)
+                    
+                Text(isSyncing ? "Updating holdings" : "Last sync 2 hours ago")
+                    .customFont(.caption)
+                   
             }
+            
             Spacer()
+            
             if isSyncing {
                 ProgressView()
+                    .tint(.textSecondary)
+            } else {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.3)) { isSyncing.toggle() }
+                } label: {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.subheadline)
+                        
+                }
             }
         }
-        .padding(12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(16)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     var allocationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Portfolio Allocation")
-                    .font(.headline)
+                    .customFont(.headline)
+                   
                 Spacer()
-                Button("View") {}
-                    .font(.caption.weight(.semibold))
+                NavigationArrowButton(action: {})
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: 20) {
                 AllocationRingView(items: allocation)
-                    .frame(width: 140, height: 140)
+                    .frame(width: 120, height: 120)
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     ForEach(allocation) { item in
-                        HStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             Circle()
                                 .fill(item.color)
-                                .frame(width: 10, height: 10)
+                                .frame(width: 8, height: 8)
                             Text(item.name)
-                                .font(.subheadline)
+                                .customFont(.caption)
+                                .foregroundStyle(Color.textSecondary)
                             Spacer()
                             Text("\(item.value)%")
-                                .font(.subheadline.weight(.semibold))
-                            Image(systemName: item.source == .plaid ? "link.circle.fill" : "pencil.circle.fill")
-                                .foregroundStyle(item.source == .plaid ? .blue : .secondary)
+                                .customFont(.caption)
+                                .foregroundStyle(Color.textPrimary)
                         }
                     }
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .padding(20)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     var quickStatsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Stats")
-                .font(.headline)
+            HStack {
+                Text("Quick Stats")
+                    .customFont(.headline)
+                  
+                Spacer()
+                NavigationArrowButton(action: {})
+            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -161,32 +258,32 @@ private extension DashboardView {
                         StatCard(item: item)
                     }
                 }
-                .padding(.vertical, 4)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     var holdingsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Top Holdings")
-                    .font(.headline)
+                    .customFont(.headline)
+                    
                 Spacer()
-                Button("View All Accounts") {}
-                    .font(.caption.weight(.semibold))
+                Button("View All") {}
+                    .customFont(.caption)
+                   
             }
 
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 ForEach(holdings) { holding in
                     HoldingRow(item: holding)
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
+// MARK: - Data Models
 private struct AllocationItem: Identifiable {
     let id = UUID()
     let name: String
@@ -219,25 +316,117 @@ private struct HoldingItem: Identifiable {
     let icon: String
 }
 
+private struct Portfolio: Identifiable {
+    let id = UUID()
+    let name: String
+    let balance: String
+}
+
+// MARK: - Reusable Components
+private struct IconButton: View {
+    let icon: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(Color.textSecondary)
+                .frame(width: 40, height: 40)
+                .background(Color.cardBackgroundSecondary, in: Circle())
+        }
+    }
+}
+
+private struct NavigationArrowButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.up.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.black)
+                .frame(width: 32, height: 32)
+                .background(Color.white, in: Circle())
+        }
+    }
+}
+
+private struct ChangeIndicator: View {
+    let value: String
+    let percentage: String
+    let isPositive: Bool
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: isPositive ? "arrow.up.right" : "arrow.down.right")
+                .font(.caption2.weight(.bold))
+            Text(value)
+                .customFont(.caption)
+            Text(percentage)
+                .customFont(.caption)
+        }
+        .foregroundStyle(isPositive ? Color.accentGreen : Color.red)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(isPositive ? Color.accentGreen.opacity(0.1) : Color.red.opacity(0.15))
+        )
+    }
+}
+
+private struct MiniPortfolioCard: View {
+    let portfolio: Portfolio
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "arrow.up.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.black)
+                    .frame(width: 24, height: 24)
+                    .background(Color.white, in: Circle())
+                Spacer()
+            }
+            
+            Spacer()
+            
+            Text(portfolio.balance)
+                .customFont(.headline)
+                .foregroundStyle(Color.textPrimary)
+            
+            Text(portfolio.name)
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+                .lineLimit(1)
+        }
+        .padding(14)
+        .frame(width: 140, height: 120)
+        .background(Color.cardBackgroundSecondary, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
 private struct AllocationRingView: View {
     let items: [AllocationItem]
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color(.systemGray5), lineWidth: 18)
+                .stroke(Color(white: 0.2), lineWidth: 16)
 
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 CircleSegment(start: startAngle(for: index), end: endAngle(for: index))
-                    .stroke(item.color, style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                    .stroke(item.color, style: StrokeStyle(lineWidth: 16, lineCap: .round))
             }
 
-            VStack(spacing: 4) {
-                Text("Allocation")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            VStack(spacing: 2) {
+                Text("Total")
+                    .customFont(.caption2)
+                    .foregroundStyle(Color.textTertiary)
                 Text("100%")
-                    .font(.headline)
+                    .customFont(.headline)
+                    .foregroundStyle(Color.textPrimary)
             }
         }
     }
@@ -268,22 +457,27 @@ private struct StatCard: View {
     let item: StatItem
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Image(systemName: item.icon)
-                .font(.title2)
-                .foregroundStyle(item.isPositive ? .green : .red)
-            Text(item.title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(item.subtitle)
-                .font(.subheadline.weight(.semibold))
+                .font(.title3)
+                .foregroundStyle(item.isPositive ? .pink : .red)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .customFont(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                Text(item.subtitle)
+                    .customFont(.subheadline)
+                    .foregroundStyle(Color.textPrimary)
+            }
+            
             Text(item.value)
-                .font(.headline)
-                .foregroundStyle(item.isPositive ? .green : .red)
+                .customFont(.headline)
+                .foregroundStyle(item.isPositive ? Color.accentGreen : Color.red)
         }
-        .padding(14)
-        .frame(width: 160, alignment: .leading)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .padding(16)
+        .frame(width: 150, alignment: .leading)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 
@@ -291,34 +485,61 @@ private struct HoldingRow: View {
     let item: HoldingItem
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Image(systemName: item.icon)
-                .font(.title3)
-                .foregroundStyle(.blue)
-                .frame(width: 36, height: 36)
-                .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .font(.body)
+                .foregroundStyle(Color.textPrimary)
+                .frame(width: 40, height: 40)
+                .background(Color.cardBackgroundSecondary, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
-                    .font(.subheadline.weight(.semibold))
+                    .customFont(.subheadline)
+                    .foregroundStyle(Color.textPrimary)
+                    .lineLimit(1)
                 Text(item.source)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .customFont(.caption)
+                    .foregroundStyle(Color.textTertiary)
             }
+            
             Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
+            
+            VStack(alignment: .trailing, spacing: 3) {
                 Text(item.value)
-                    .font(.subheadline.weight(.semibold))
+                    .customFont(.subheadline)
+                    .foregroundStyle(Color.textPrimary)
                 Text(item.change)
-                    .font(.caption)
-                    .foregroundStyle(item.isPositive ? .green : .red)
+                    .customFont(.caption)
+                    .foregroundStyle(item.isPositive ? Color.accentGreen : Color.red)
             }
         }
-        .padding(12)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(14)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct PortfolioDetailView: View {
+    let portfolio: Portfolio
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Balance")
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+            Text(portfolio.balance)
+                .customFont(.largeTitle)
+                .foregroundStyle(Color.textPrimary)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .background(Color.black)
+        .navigationTitle(portfolio.name)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 #Preview {
     DashboardView()
+        .preferredColorScheme(.dark)
 }
