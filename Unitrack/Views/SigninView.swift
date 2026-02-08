@@ -59,7 +59,7 @@ struct SigninView: View {
                         .foregroundColor(.secondary)
                     TextField("", text: $email)
                         .customTextField()
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(.secondary)
                         .textInputAutocapitalization(.never)
                 }
                 
@@ -69,7 +69,7 @@ struct SigninView: View {
                         .foregroundColor(.secondary)
                     SecureField("", text: $password)
                         .customTextField(image: Image("Icon Lock"))
-                        .foregroundStyle(Color.gray)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Button {
@@ -80,7 +80,7 @@ struct SigninView: View {
                         .padding(20)
                         .frame(maxWidth: .infinity)
                         .background(Color(hex: "F77D8E"))
-                        .foregroundStyle(Color(.white))
+                        .foregroundStyle(.white)
                         .cornerRadius(20, corners: [.topRight, .bottomLeft, .bottomRight])
                         .cornerRadius(8, corners: .topLeft)
                         .shadow(color: Color(hex: "F77D8E").opacity(0.5),
@@ -91,7 +91,7 @@ struct SigninView: View {
                     Rectangle().frame(height: 1).opacity(0.3)
                     Text("OR")
                         .customFont(.subheadline)
-                        .foregroundColor(.pink.opacity(0.3))
+                        .foregroundStyle(.secondary)
                     Rectangle().frame(height: 1).opacity(0.3)
                 }
                 Text("Sign up with Email, Apple or Google")
@@ -112,7 +112,7 @@ struct SigninView: View {
             .shadow(color: Color("Shadow").opacity(0.3), radius: 5, x: 0, y: 3)
             .shadow(color: Color("Shadow").opacity(0.3), radius: 30, x: 0, y: 30)
             .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.linearGradient(colors: [.white.opacity(0.1), .white.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .stroke(.linearGradient(colors: [.primary.opacity(0.12), .primary.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing))
             )
             .padding()
             .overlay(

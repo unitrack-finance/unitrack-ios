@@ -38,9 +38,9 @@ struct OnboardingView: View {
                             } label: {
                                 Image(systemName: "xmark")
                                     .frame(width: 36, height: 36)
-                                    .foregroundColor(.black)
-                                    .background(.white)
+                                    .foregroundStyle(.black)
                                     .mask(Circle())
+                                    .background(.white)
                                     .shadow(color:
                                                 Color("Shadow").opacity(0.3),
                                             radius: 5, x:0, y:5
@@ -85,10 +85,10 @@ struct OnboardingView: View {
                         .foregroundColor(Color(hex: "F77D8E"))
                 )
                 .background(
-                    Color.black
+                    Color.primary
                         .cornerRadius(30)
                         .blur(radius: 10)
-                        .opacity(0.3)
+                        .opacity(0.2)
                         .offset(y: 10)
                 )
                 .onTapGesture {

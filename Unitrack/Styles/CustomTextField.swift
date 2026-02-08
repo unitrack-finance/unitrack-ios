@@ -14,11 +14,10 @@ struct CustomTextField: ViewModifier {
             .customFont(.headline)
             .padding(15)
             .padding(.leading, 36)
-            .background(.white)
             .mask(RoundedRectangle(cornerRadius: 8, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke()
-                .fill(.black.opacity(0.2))
+                .fill(.primary.opacity(0.12))
             )
             .overlay(
                 image
