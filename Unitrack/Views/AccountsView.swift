@@ -7,28 +7,32 @@
 
 import SwiftUI
 
-struct AccountsView: View {
+struct AssetsView: View {
+    @State var searchTerm = ""
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                Image(systemName: "link.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.blue)
-                Text("No Connected Accounts")
-                    .font(.title3.weight(.semibold))
-                Text("Connect your institutions to sync holdings.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button("Connect Account") {}
-                    .buttonStyle(.borderedProminent)
+            ScrollView {
+                VStack(spacing: 16) {
+                    HStack{
+                        Text("Search")
+                            .customFont(.title)
+                        Spacer()
+                    }
+                    TextField("", text: $searchTerm)
+                        .customTextField(image: Image(systemName: "magnifyingglass"))
+                        .foregroundStyle(Color.gray)
+                        .textInputAutocapitalization(.never)
+                        
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 50)
             }
-            .padding()
-            .navigationTitle("Accounts")
+            .scrollIndicators(.hidden)
         }
     }
 }
 
 #Preview {
-    AccountsView()
+    AssetsView()
 }

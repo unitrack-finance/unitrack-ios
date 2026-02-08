@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Charts
 
 // MARK: - Design System Colors
 extension Color {
@@ -22,11 +23,11 @@ struct DashboardView: View {
     @State private var selectedTimeframe = "30 Days"
 
     private let allocation: [AllocationItem] = [
-        .init(name: "Stocks", value: 46, color: Color(white: 0.85), source: .plaid),
-        .init(name: "Crypto", value: 18, color: Color(white: 0.55), source: .manual),
-        .init(name: "Real Estate", value: 14, color: Color(red: 0.55, green: 0.6, blue: 0.45), source: .manual),
-        .init(name: "Fixed Income", value: 12, color: Color(red: 0.7, green: 0.75, blue: 0.55), source: .plaid),
-        .init(name: "Cash", value: 10, color: Color(white: 0.35), source: .plaid)
+        .init(name: "Stocks", value: 46, color: Color.blue, source: .plaid),
+        .init(name: "Crypto", value: 18, color: Color.pink, source: .manual),
+        .init(name: "Real Estate", value: 14, color: Color.red, source: .manual),
+        .init(name: "Fixed Income", value: 12, color: Color.green, source: .plaid),
+        .init(name: "Cash", value: 10, color: Color.cyan, source: .plaid)
     ]
 
     private let stats: [StatItem] = [
@@ -63,7 +64,7 @@ struct DashboardView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                .padding(.bottom, 100)
+                .padding(.bottom, 50)
             }
             .scrollIndicators(.hidden)
         }
@@ -218,24 +219,7 @@ private extension DashboardView {
 
             HStack(spacing: 20) {
                 AllocationRingView(items: allocation)
-                    .frame(width: 120, height: 120)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(allocation) { item in
-                        HStack(spacing: 10) {
-                            Circle()
-                                .fill(item.color)
-                                .frame(width: 8, height: 8)
-                            Text(item.name)
-                                .customFont(.caption)
-                                .foregroundStyle(Color.textSecondary)
-                            Spacer()
-                            Text("\(item.value)%")
-                                .customFont(.caption)
-                                .foregroundStyle(Color.textPrimary)
-                        }
-                    }
-                }
+                    .frame(height: 300)
             }
         }
         .padding(20)
@@ -409,37 +393,36 @@ private struct MiniPortfolioCard: View {
 
 private struct AllocationRingView: View {
     let items: [AllocationItem]
+    
+    var largestPositionItem: AllocationItem? {
+        items.max(by: { $0.value < $1.value })
+    }
 
     var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color(white: 0.2), lineWidth: 16)
-
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                CircleSegment(start: startAngle(for: index), end: endAngle(for: index))
-                    .stroke(item.color, style: StrokeStyle(lineWidth: 16, lineCap: .round))
+        Chart(items, id: \.name) { element in
+            SectorMark (
+                angle: .value("Allocations", element.value),
+                innerRadius: .ratio(0.618),
+                angularInset: 1.5
+            )
+            .cornerRadius(5)
+            .foregroundStyle(by: .value("Name", element.name))
             }
-
-            VStack(spacing: 2) {
-                Text("Total")
-                    .customFont(.caption2)
-                    .foregroundStyle(Color.textTertiary)
-                Text("100%")
-                    .customFont(.headline)
-                    .foregroundStyle(Color.textPrimary)
+        .chartBackground { chartProxy in
+            GeometryReader { geometry in
+                let frame = geometry[chartProxy.plotAreaFrame]
+                VStack {
+                    Text("Largest Position")
+                        .customFont(.caption2)
+                        .foregroundStyle(Color.textSecondary)
+                    if let largest = largestPositionItem {
+                        Text(largest.name)
+                            .customFont(.headline)
+                    }
+                }
+                .position(x: frame.midX, y:frame.midY)
             }
-        }
-    }
-
-    private func startAngle(for index: Int) -> Angle {
-        let value = items.prefix(index).reduce(0) { $0 + $1.value }
-        return Angle(degrees: Double(value) / 100 * 360 - 90)
-    }
-
-    private func endAngle(for index: Int) -> Angle {
-        let value = items.prefix(index + 1).reduce(0) { $0 + $1.value }
-        return Angle(degrees: Double(value) / 100 * 360 - 90)
-    }
+        }        }
 }
 
 private struct CircleSegment: Shape {
@@ -543,3 +526,4 @@ private struct PortfolioDetailView: View {
     DashboardView()
         .preferredColorScheme(.dark)
 }
+

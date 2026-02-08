@@ -18,8 +18,8 @@ struct Tabs: View {
             Tab("Dashboard", systemImage: "house", value: .dashboard) {
                 DashboardView()
             }
-            Tab("Accounts", systemImage: "link.circle.fill", value: .accounts) {
-                AccountsView()
+            Tab("Search", systemImage: "magnifyingglass", value: .accounts) {
+                AssetsView()
             }
             Tab("Analytics", systemImage: "chart.pie", value: .analytics) {
                 AnalyticsView()
