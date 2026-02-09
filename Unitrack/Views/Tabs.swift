@@ -33,4 +33,5 @@ struct Tabs: View {
 
 #Preview {
     Tabs()
+        .environmentObject(SubscriptionManager.shared)
 }

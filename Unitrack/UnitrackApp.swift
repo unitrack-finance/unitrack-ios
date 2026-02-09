@@ -7,13 +7,22 @@
 
 import SwiftUI
 import SwiftData
+import RevenueCat
 
 @main
 struct UnitrackApp: App {
+    @StateObject private var subscriptionManager = SubscriptionManager.shared
+
+    init() {
+        // Configure RevenueCat
+        Purchases.logLevel = .debug
+        Purchases.configure(withAPIKey: "test_MUdrghvVuaLcXFUPvAeuFidPhFh")
+    }
 
     var body: some Scene {
         WindowGroup {
-           OnboardingView()
+            OnboardingView()
+                .environmentObject(subscriptionManager)
         }
     }
 }

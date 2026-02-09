@@ -56,6 +56,7 @@ struct OnboardingView: View {
             }
             .fullScreenCover(isPresented: $isLoggedIn) {
                 Tabs()
+                    .environmentObject(SubscriptionManager.shared)
                     .interactiveDismissDisabled(true)
             }
         }
@@ -124,5 +125,6 @@ struct OnboardingView: View {
     struct OnboardingView_Preview: PreviewProvider {
         static var previews: some View {
             OnboardingView()
+                .environmentObject(SubscriptionManager.shared)
         }
     }

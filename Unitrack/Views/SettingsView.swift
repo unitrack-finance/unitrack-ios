@@ -6,11 +6,33 @@
 //
 
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var subscriptionManager: SubscriptionManager
+    @State private var showCustomerCenter = false
+    
     var body: some View {
         NavigationStack {
             List {
+                Section("Subscription") {
+                    HStack {
+                        Image(systemName: "star.circle.fill")
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(subscriptionManager.isPremium ? "Unitrack Pro" : "Unitrack Free")
+                                .customFont(.headline)
+                            Text(subscriptionManager.isPremium ? "Premium features unlocked" : "Upgrade to unlock advanced insights")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    Button("Manage Subscription") {
+                        showCustomerCenter = true
+                    }
+                }
+
                 Section("Account Connections") {
                     HStack {
                         Image(systemName: "link.circle.fill")
@@ -38,10 +60,14 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showCustomerCenter) {
+                CustomerCenterView()
+            }
         }
     }
 }
 
 #Preview {
     SettingsView()
+        .environmentObject(SubscriptionManager.shared)
 }
