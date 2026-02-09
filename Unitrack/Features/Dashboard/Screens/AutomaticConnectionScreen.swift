@@ -25,7 +25,7 @@ struct AutomaticConnectionScreen: View {
                     Text("Automatic connection")
                         .customFont(.title2)
                     
-                    Text("Securely import your \(institution.name) account. All data is encrypted and stored on European servers. Your information remains within your control at all times.")
+                    Text("Securely import your \(institution.name) account. All data is encrypted and stored by Plaid")
                         .customFont(.body)
                         .foregroundStyle(Color.textSecondary)
                         .multilineTextAlignment(.center)

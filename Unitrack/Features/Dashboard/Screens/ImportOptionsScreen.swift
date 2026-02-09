@@ -29,13 +29,14 @@ struct ImportOptionsScreen: View {
             // Options List
             VStack(spacing: 16) {
                 NavigationLink(destination: AutomaticConnectionScreen(institution: institution)) {
+                NavigationLink(destination: AutomaticConnectionScreen(institution: institution)) {
                     ImportOptionCard(
                         title: "Automatic connection",
                         subtitle: "Investments (Transactions)",
                         badge: "Most popular",
-                        icon: "bolt.fill",
-                        action: {}
+                        icon: "bolt.fill"
                     )
+                }
                 }
                 
                 ImportOptionCard(
@@ -74,41 +75,51 @@ struct ImportOptionCard: View {
     let subtitle: String
     var badge: String? = nil
     let icon: String
-    let action: () -> Void
+    var action: (() -> Void)? = nil
     
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(title)
-                            .customFont(.headline)
-                        
-                        if let badge = badge {
-                            Text(badge)
-                                .font(.system(size: 10, weight: .bold))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.blue.opacity(0.2), in: Capsule())
-                                .foregroundStyle(.blue)
-                        }
-                    }
+        Group {
+            if let action = action {
+                Button(action: action) {
+                    cardContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                cardContent
+            }
+        }
+    }
+    
+    private var cardContent: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(title)
+                        .customFont(.headline)
                     
-                    Text(subtitle)
-                        .customFont(.caption)
-                        .foregroundStyle(Color.textSecondary)
+                    if let badge = badge {
+                        Text(badge)
+                            .font(.system(size: 10, weight: .bold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.blue.opacity(0.2), in: Capsule())
+                            .foregroundStyle(.blue)
+                    }
                 }
                 
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Color.textTertiary)
+                Text(subtitle)
+                    .customFont(.caption)
+                    .foregroundStyle(Color.textSecondary)
             }
-            .padding(20)
-            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Color.textTertiary)
         }
-        .buttonStyle(.plain)
+        .padding(20)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
