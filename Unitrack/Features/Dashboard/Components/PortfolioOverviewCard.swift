@@ -10,6 +10,8 @@ import SwiftUI
 struct PortfolioOverviewCard: View {
     let portfolios: [Portfolio]
     @Binding var selectedTimeframe: String
+    var onAddPortfolio: () -> Void
+
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -66,9 +68,7 @@ struct PortfolioOverviewCard: View {
             
             HStack {
                 Spacer()
-                Button(action: {
-                    print("Add Portfolio button tapped")
-                }) {
+                Button(action: onAddPortfolio) {
                     Label("Add Portfolio", systemImage: "plus.circle.fill")
                         .customFont(.body)
                 }

@@ -10,6 +10,8 @@ import SwiftUI
 struct DashboardView: View {
     @State private var isSyncing = false
     @State private var selectedTimeframe = "30 Days"
+    @State private var showAddPortfolio = false
+    @State private var selectedPortfolioType: PortfolioType?
 
     private let allocation: [AllocationItem] = [
         .init(name: "Stocks", value: 46, color: Color.blue, source: .plaid),
@@ -45,7 +47,11 @@ struct DashboardView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     DashboardHeader()
-                    PortfolioOverviewCard(portfolios: portfolios, selectedTimeframe: $selectedTimeframe)
+                    PortfolioOverviewCard(
+                        portfolios: portfolios,
+                        selectedTimeframe: $selectedTimeframe,
+                        onAddPortfolio: { showAddPortfolio = true }
+                    )
                     SyncStatusBanner(isSyncing: $isSyncing)
                     AllocationSection(allocation: allocation)
                     QuickStatsSection(stats: stats)
@@ -56,6 +62,25 @@ struct DashboardView: View {
                 .padding(.bottom, 50)
             }
             .scrollIndicators(.hidden)
+            .navigationDestination(item: $selectedPortfolioType) { type in
+                switch type {
+                case .investments:
+                    InvestmentsScreen()
+                case .cash:
+                    CashScreen()
+                case .liabilities:
+                    LiabilitiesScreen()
+                }
+            }
+            .sheet(isPresented: $showAddPortfolio) {
+                AddPortfolioSheet(onSelect: { type in
+                    showAddPortfolio = false
+                    // Short delay to let the sheet dismiss before pushing the new screen
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        selectedPortfolioType = type
+                    }
+                })
+            }
         }
     }
 }
