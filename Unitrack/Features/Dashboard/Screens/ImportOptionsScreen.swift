@@ -56,10 +56,13 @@ struct ImportOptionsScreen: View {
                 Image(systemName: "info.circle.fill")
                     .foregroundStyle(.blue)
                 
-                Text("We take data privacy and security seriously. ")
-                    .foregroundStyle(Color.textSecondary) +
-                Text("Learn more")
-                    .foregroundStyle(.blue)
+                Text({
+                    var a = AttributedString("We take data privacy and security seriously. ")
+                    a.foregroundColor = Color.textSecondary
+                    var b = AttributedString("Learn more")
+                    b.foregroundColor = .blue
+                    return a + b
+                }())
             }
             .customFont(.caption)
             .padding(.bottom, 20)
@@ -129,3 +132,4 @@ struct ImportOptionCard: View {
             .preferredColorScheme(.dark)
     }
 }
+
