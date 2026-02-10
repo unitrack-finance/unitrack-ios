@@ -1,0 +1,20 @@
+# Xcode
+#
+build/
+DerivedData/
+*.swp
+*.lock
+*.DS_Store
+*.orig
+*.xcscheme
+*.xctestplan
+xcuserdata/
+
+# Swift Package Manager
+#
+.build/
+.swiftpm/
+
+# Unitrack Secrets
+#
+Secrets.xcconfig

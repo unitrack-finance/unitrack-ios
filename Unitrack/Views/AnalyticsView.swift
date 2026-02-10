@@ -12,21 +12,76 @@ import RevenueCatUI
 struct AnalyticsView: View {
     @EnvironmentObject private var subscriptionManager: SubscriptionManager
     @State private var showPaywall = false
+    @State private var showAgent = false
+    @State private var showExportSheet = false
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                if subscriptionManager.isPremium {
-                    premiumContent
-                } else {
-                    lockedContent
+                ZStack(alignment: .bottomTrailing) {
+                    Group {
+                        if subscriptionManager.isPremium {
+                            PremiumAnalyticsView()
+                        } else {
+                            lockedContent
+                        }
+                    }
+                    
+                    if subscriptionManager.isPremium {
+                        agentFAB
+                    }
                 }
-            }
-            .navigationTitle("Analytics")
-            .sheet(isPresented: $showPaywall) {
-                PaywallView(displayCloseButton: true)
-            }
+                .toolbar {
+                    if subscriptionManager.isPremium {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button {
+                                showExportSheet = true
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                            }
+                        }
+                    }
+                }
+                .sheet(isPresented: $showPaywall) {
+                    PaywallView(displayCloseButton: true)
+                }
+                .fullScreenCover(isPresented: $showAgent) {
+                    AgentChatView()
+                }
+                .confirmationDialog("Export Portfolio Analytics", isPresented: $showExportSheet) {
+                    Button("Export to PDF") {
+                         // PDF Logic placeholder
+                    }
+                    Button("Export to CSV") {
+                        if let url = ExportService.shared.generateCSV(from: dummyPerformanceData) {
+                            // In a real app, present ShareSheet
+                            print("CSV Available at: \(url)")
+                        }
+                    }
+                    Button("Cancel", role: .cancel) {}
         }
+    }
+}
+    
+    private var agentFAB: some View {
+        Button {
+            showAgent = true
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                Text("Agent")
+                    .customFont(.headline)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: Capsule()
+            )
+            .foregroundStyle(.white)
+            .shadow(color: .purple.opacity(0.3), radius: 10, x: 0, y: 5)
+        }
+        .padding(20)
+        .transition(.scale.combined(with: .opacity))
     }
     
     private var lockedContent: some View {
@@ -72,27 +127,6 @@ struct AnalyticsView: View {
                 .font(.caption2)
                 .foregroundStyle(Color.textTertiary)
                 .padding(.bottom, 20)
-        }
-    }
-    
-    private var premiumContent: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Text("Welcome to Premium!")
-                    .customFont(.headline)
-                
-                // Advanced charts will go here
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.cardBackground)
-                    .frame(height: 200)
-                    .overlay(Text("Risk Analysis Chart").foregroundStyle(Color.textSecondary))
-                
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.cardBackground)
-                    .frame(height: 200)
-                    .overlay(Text("Sector Allocation").foregroundStyle(Color.textSecondary))
-            }
-            .padding(20)
         }
     }
 }

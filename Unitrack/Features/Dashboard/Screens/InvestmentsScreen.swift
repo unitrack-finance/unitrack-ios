@@ -9,20 +9,20 @@ struct InvestmentsScreen: View {
     @State private var searchTerm = ""
     @State private var selectedCategory: InstitutionCategory = .popular
     
-    // Mock Data
-    private let institutions: [Institution] = [
-        .init(name: "Interactive Brokers", logoName: "chart.bar.fill", category: .popular),
-        .init(name: "Trading 212", logoName: "arrow.up.arrow.down", category: .popular),
-        .init(name: "Trade Republic", logoName: "building.columns.fill", category: .popular),
-        .init(name: "DEGIRO", logoName: "m.circle.fill", category: .popular),
-        .init(name: "Coinbase", logoName: "bitcoinsign.circle.fill", category: .popular)
-    ]
-    
-    var filteredInstitutions: [Institution] {
-        institutions.filter { inst in
-            let matchesSearch = searchTerm.isEmpty || inst.name.localizedCaseInsensitiveContains(searchTerm)
-            let matchesCategory = inst.category == selectedCategory
-            return matchesSearch && (searchTerm.isEmpty ? matchesCategory : true)
+    var filteredItems: [Connectable] {
+        let source: [Connectable]
+        switch selectedCategory {
+        case .popular: source = Supported.popular
+        case .brokers: source = Supported.brokers
+        case .exchanges: source = Supported.exchanges
+        case .wallets: source = Supported.wallets
+        case .alternatives: source = [] // Alternatives are manual only for now
+        }
+        
+        if searchTerm.isEmpty { return source }
+        
+        return source.filter { item in
+            item.name.localizedCaseInsensitiveContains(searchTerm)
         }
     }
     
@@ -73,14 +73,20 @@ struct InvestmentsScreen: View {
                 
                 // Institution Grid
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    ForEach(filteredInstitutions) { inst in
-                        NavigationLink(destination: ImportOptionsScreen(institution: inst)) {
-                            InstitutionGridTile(institution: inst)
+                    ForEach(filteredItems) { item in
+                        if item.type == .wallet {
+                            NavigationLink(destination: WalletImportOptionsScreen(wallet: item)) {
+                                InstitutionGridTile(institution: Institution(from: item))
+                            }
+                        } else {
+                            NavigationLink(destination: ImportOptionsScreen(institution: Institution(from: item))) {
+                                InstitutionGridTile(institution: Institution(from: item))
+                            }
                         }
                     }
                     
                     // Manual Portfolio Option
-                    NavigationLink(destination: Text("Manual Portfolio Flow")) {
+                    NavigationLink(destination: ManualTransactionScreen()) {
                         VStack(spacing: 12) {
                             Image(systemName: "pencil")
                                 .font(.system(size: 24))

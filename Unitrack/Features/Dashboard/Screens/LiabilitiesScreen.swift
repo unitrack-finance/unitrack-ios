@@ -21,7 +21,7 @@ struct LiabilitiesScreen: View {
                     .customFont(.title2)
                     .foregroundStyle(Color.textPrimary)
                 
-                Text("This screen will allow you to track credit cards, loans, mortgages and other liabilities.")
+                Text("Coming soon. This screen will allow you to track credit cards, loans, mortgages and other liabilities.")
                     .customFont(.body)
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)

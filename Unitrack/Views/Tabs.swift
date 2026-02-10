@@ -19,7 +19,7 @@ struct Tabs: View {
                 DashboardView()
             }
             Tab("Search", systemImage: "magnifyingglass", value: .accounts) {
-                AssetsView()
+                AssetView()
             }
             Tab("Analytics", systemImage: "chart.pie", value: .analytics) {
                 AnalyticsView()

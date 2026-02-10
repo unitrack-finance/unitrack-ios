@@ -14,9 +14,8 @@ struct UnitrackApp: App {
     @StateObject private var subscriptionManager = SubscriptionManager.shared
 
     init() {
-        // Configure RevenueCat
         Purchases.logLevel = .debug
-        Purchases.configure(withAPIKey: "test_MUdrghvVuaLcXFUPvAeuFidPhFh")
+        Purchases.configure(withAPIKey: Configuration.APIKeys.revenueCat)
     }
 
     var body: some Scene {

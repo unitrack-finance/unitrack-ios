@@ -21,7 +21,7 @@ struct CashScreen: View {
                     .customFont(.title2)
                     .foregroundStyle(Color.textPrimary)
                 
-                Text("This screen will allow you to add current accounts, savings accounts and other cash holdings.")
+                Text("Coming soon. This screen will allow you to add current accounts, savings accounts and other cash holdings.")
                     .customFont(.body)
                     .foregroundStyle(Color.textSecondary)
                     .multilineTextAlignment(.center)
