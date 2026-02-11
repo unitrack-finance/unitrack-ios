@@ -28,9 +28,20 @@ struct ManualTransactionScreen: View {
     @State private var description = ""
     @State private var date = Date()
     @State private var price = ""
+    @State private var currentValue = ""
     @State private var selectedCurrency = "KES"
     
-    let transactionTypes = ["Buy", "Sell", "Deposit", "Withdrawal"]
+    // Specific Fields
+    @State private var propertyTaxDate = Date()
+    @State private var isinNumber = ""
+    @State private var nominalQuantity = ""
+    @State private var percentage = ""
+    @State private var tradingCosts = ""
+    @State private var taxes = ""
+    @State private var cryptoSymbol = ""
+    @State private var cryptoQuantity = ""
+    @State private var showCryptoSearch = false
+    
     let currencies = ["KES", "USD", "EUR", "GBP"]
     
     @Environment(\.dismiss) private var dismiss
@@ -45,6 +56,7 @@ struct ManualTransactionScreen: View {
                             Button {
                                 withAnimation {
                                     selectedType = type
+                                    resetForm(for: type)
                                 }
                             } label: {
                                 VStack(spacing: 8) {
@@ -67,110 +79,118 @@ struct ManualTransactionScreen: View {
                 // Form Fields
                 VStack(spacing: 20) {
                     // Transaction Type
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Transaction Type")
-                            .customFont(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                        
-                        Menu {
-                            ForEach(transactionTypes, id: \.self) { type in
-                                Button(type) { transactionType = type }
-                            }
-                        } label: {
-                            HStack {
-                                Text(transactionType)
-                                    .customFont(.body)
-                                    .foregroundStyle(Color.textPrimary)
-                                Spacer()
-                                Image(systemName: "chevron.down")
-                                    .font(.caption)
-                                    .foregroundStyle(Color.textTertiary)
-                            }
-                            .padding(16)
-                            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
-                        }
-                    }
-                    
-                    // Description
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Description")
-                            .customFont(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                        
-                        TextField("e.g. Condo Baker Street", text: $description)
-                            .customFont(.body)
-                            .padding(16)
-                            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
-                    }
-                    
-                    // Transaction Date
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Transaction Date")
-                            .customFont(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                        
-                        HStack {
-                            Text(date.formatted(date: .long, time: .omitted))
-                                .customFont(.body)
-                                .foregroundStyle(Color.textPrimary)
-                            Spacer()
-                            Image(systemName: "calendar")
-                                .foregroundStyle(Color.textPrimary)
-                                .overlay {
-                                    DatePicker("", selection: $date, displayedComponents: .date)
-                                        .blendMode(.destinationOver)
-                                        .labelsHidden()
-                                        .opacity(0.011) // Invisible but clickable
-                                }
-                        }
-                        .padding(16)
-                        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
-                    }
-                    
-                    // Purchase Price
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(selectedType == .cash ? "Amount" : "Purchase Price")
-                            .customFont(.caption)
-                            .foregroundStyle(Color.textSecondary)
-                        
-                        HStack {
-                            TextField("e.g. KES 150.00", text: $price)
-                                .keyboardType(.decimalPad)
-                                .customFont(.body)
+                    if showTransactionType {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Transaction Type")
+                                .customFont(.caption)
+                                .foregroundStyle(Color.textSecondary)
                             
                             Menu {
-                                ForEach(currencies, id: \.self) { currency in
-                                    Button(currency) { selectedCurrency = currency }
+                                ForEach(availableTransactionTypes, id: \.self) { type in
+                                    Button(type) { transactionType = type }
                                 }
                             } label: {
-                                HStack(spacing: 4) {
-                                    Text(selectedCurrency)
-                                        .customFont(.subheadline)
-                                        .bold()
+                                HStack {
+                                    Text(transactionType)
+                                        .customFont(.body)
+                                        .foregroundStyle(Color.textPrimary)
+                                    Spacer()
                                     Image(systemName: "chevron.down")
-                                        .font(.caption2)
+                                        .font(.caption)
+                                        .foregroundStyle(Color.textTertiary)
                                 }
-                                .foregroundStyle(Color.textPrimary)
+                                .padding(16)
+                                .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
                             }
                         }
-                        .padding(16)
-                        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    
+                    // Specific fields based on type
+                    Group {
+                        if selectedType == .crypto {
+                            // Crypto Search Button
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Symbol")
+                                    .customFont(.caption)
+                                    .foregroundStyle(Color.textSecondary)
+                                
+                                Button {
+                                    showCryptoSearch = true
+                                } label: {
+                                    HStack {
+                                        Text(cryptoSymbol.isEmpty ? "Search Crypto (e.g. BTC)" : cryptoSymbol)
+                                            .customFont(.body)
+                                            .foregroundStyle(cryptoSymbol.isEmpty ? Color.textTertiary : Color.textPrimary)
+                                        Spacer()
+                                        Image(systemName: "magnifyingglass")
+                                            .foregroundStyle(Color.textTertiary)
+                                    }
+                                    .padding(16)
+                                    .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
+                                }
+                            }
+                            
+                            fieldView(title: "Quantity", placeholder: "e.g. 0.5", text: $cryptoQuantity, keyboardType: .decimalPad)
+                        }
+                        
+                        if selectedType == .bond {
+                            fieldView(title: "Bond ISIN Number", placeholder: "e.g. US0378331005", text: $isinNumber)
+                            fieldView(title: "Nominal Quantity", placeholder: "e.g. 1000", text: $nominalQuantity, keyboardType: .decimalPad)
+                            fieldView(title: "Percentage (%)", placeholder: "e.g. 4.5", text: $percentage, keyboardType: .decimalPad)
+                        }
+                        
+                        if selectedType != .bond && selectedType != .crypto {
+                            fieldView(title: "Description", placeholder: "Enter description", text: $description)
+                        }
+                    }
+                    
+                    // Common Date Field
+                    datePickerView(title: "Transaction Date", date: $date)
+                    
+                    // Purchase Price (for most)
+                    if selectedType != .cash {
+                        priceFieldView(title: "Purchase Price", text: $price)
+                    } else {
+                        priceFieldView(title: "Amount", text: $price)
+                    }
+                    
+                    // Current Value (for some)
+                    if [.realEstate, .nft, .commodities, .art].contains(selectedType) {
+                        priceFieldView(title: "Current Value", text: $currentValue)
+                    }
+                    
+                    // Extra fields for Real Estate
+                    if selectedType == .realEstate {
+                        datePickerView(title: "Next Property Tax Date", date: $propertyTaxDate)
+                    }
+                    
+                    // Trading costs and taxes for Bonds and Crypto
+                    if [.bond, .crypto].contains(selectedType) {
+                        fieldView(title: "Trading Costs", placeholder: "e.g. 10.00", text: $tradingCosts, keyboardType: .decimalPad)
+                        fieldView(title: "Taxes", placeholder: "e.g. 5.00", text: $taxes, keyboardType: .decimalPad)
                     }
                 }
                 .padding(.horizontal, 20)
                 
-                // Total Amount
-                HStack {
-                    Text("Total Amount")
-                        .customFont(.headline)
-                        .foregroundStyle(Color.textPrimary)
-                    Spacer()
-                    Text("\(selectedCurrency) \(price.isEmpty ? "0.00" : price)")
-                        .customFont(.title3)
-                        .foregroundStyle(Color.textPrimary)
+                // Total Amount Summary
+                if !price.isEmpty || !tradingCosts.isEmpty || !taxes.isEmpty {
+                    VStack(spacing: 12) {
+                        Divider()
+                            .background(Color.textTertiary.opacity(0.2))
+                        
+                        HStack {
+                            Text("Total Outflow")
+                                .customFont(.headline)
+                                .foregroundStyle(Color.textPrimary)
+                            Spacer()
+                            Text("\(selectedCurrency) \(calculateTotal())")
+                                .customFont(.title3)
+                                .foregroundStyle(Color.textPrimary)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
                 
                 Spacer(minLength: 20)
                 
@@ -189,11 +209,9 @@ struct ManualTransactionScreen: View {
                     }
                     
                     Button {
-                        // Save & add another action
-                        description = ""
-                        price = ""
+                        resetForm(for: selectedType)
                     } label: {
-                        Text("Save and Add Another")
+                        Text("Clear All")
                             .customFont(.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -207,8 +225,162 @@ struct ManualTransactionScreen: View {
             }
         }
         .background(Color.screenBackground)
-        .navigationTitle("Add Transaction")
+        .navigationTitle("Add \(selectedType.rawValue)")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showCryptoSearch) {
+            CryptoSearchSheet(selectedSymbol: $cryptoSymbol)
+        }
+    }
+    
+    // Helper Views
+    private func fieldView(title: String, placeholder: String, text: Binding<String>, keyboardType: UIKeyboardType = .default) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+            
+            TextField(placeholder, text: text)
+                .keyboardType(keyboardType)
+                .customFont(.body)
+                .padding(16)
+                .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+    
+    private func priceFieldView(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+            
+            HStack {
+                TextField("0.00", text: text)
+                    .keyboardType(.decimalPad)
+                    .customFont(.body)
+                
+                Menu {
+                    ForEach(currencies, id: \.self) { currency in
+                        Button(currency) { selectedCurrency = currency }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedCurrency)
+                            .customFont(.subheadline)
+                            .bold()
+                        Image(systemName: "chevron.down")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(Color.textPrimary)
+                }
+            }
+            .padding(16)
+            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+    
+    private func datePickerView(title: String, date: Binding<Date>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+            
+            HStack {
+                Text(date.wrappedValue.formatted(date: .long, time: .omitted))
+                    .customFont(.body)
+                    .foregroundStyle(Color.textPrimary)
+                Spacer()
+                Image(systemName: "calendar")
+                    .foregroundStyle(Color.textPrimary)
+                    .overlay {
+                        DatePicker("", selection: date, displayedComponents: .date)
+                            .blendMode(.destinationOver)
+                            .labelsHidden()
+                            .opacity(0.011)
+                    }
+            }
+            .padding(16)
+            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+    
+    // Logics
+    private var showTransactionType: Bool {
+        // Based on user rules: RE, Bonds, Commodities are "Buy only", Cash is "Deposit/Rewards"
+        // But we want to show it if there are choices.
+        availableTransactionTypes.count > 1
+    }
+    
+    private var availableTransactionTypes: [String] {
+        switch selectedType {
+        case .realEstate, .bond, .commodities, .art:
+            return ["Buy"]
+        case .cash:
+            return ["Deposit", "Rewards"]
+        case .nft, .crypto:
+            return ["Buy", "Receive", "Reward"]
+        default:
+            return ["Buy", "Sell"]
+        }
+    }
+    
+    private func resetForm(for type: ManualAssetType) {
+        transactionType = availableTransactionTypes.first ?? "Buy"
+        description = ""
+        price = ""
+        currentValue = ""
+        isinNumber = ""
+        nominalQuantity = ""
+        percentage = ""
+        tradingCosts = ""
+        taxes = ""
+        cryptoSymbol = ""
+        cryptoQuantity = ""
+    }
+    
+    private func calculateTotal() -> String {
+        let p = Double(price) ?? 0
+        let tc = Double(tradingCosts) ?? 0
+        let tx = Double(taxes) ?? 0
+        return String(format: "%.2f", p + tc + tx)
+    }
+}
+
+struct CryptoSearchSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var selectedSymbol: String
+    @State private var searchText = ""
+    
+    let mockCoins = ["BTC", "ETH", "SOL", "ADA", "DOT", "AVAX", "LINK", "MATIC"]
+    
+    var filteredCoins: [String] {
+        if searchText.isEmpty { return mockCoins }
+        return mockCoins.filter { $0.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            List(filteredCoins, id: \.self) { coin in
+                Button {
+                    selectedSymbol = coin
+                    dismiss()
+                } label: {
+                    HStack {
+                        Text(coin)
+                            .customFont(.body)
+                        Spacer()
+                    }
+                }
+                .foregroundStyle(Color.textPrimary)
+            }
+            .navigationTitle("Search Crypto")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: "Search symbol...")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
     }
 }
 

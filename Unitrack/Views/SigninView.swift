@@ -11,7 +11,11 @@ import RiveRuntime
 struct SigninView: View {
     @State var email = ""
     @State var password = ""
+    @State var isRegistering = false
     @State var isLoading = false
+    @State private var isShowingErrorAnimation = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage: String = ""
     @Binding var showModal: Bool
     @Binding var isLoggedIn: Bool
     let check = RiveViewModel(fileName: "check", stateMachineName: "State Machine 1")
@@ -19,31 +23,72 @@ struct SigninView: View {
     
     func logIn() {
         isLoading = true
-        
-        if email != "" {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                check.triggerInput("Check")
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                confetti.triggerInput("Trigger explosion")
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                withAnimation {
-                    showModal = false
-                    isLoggedIn = true
-                }
-            }
-        } else {
+        let client = HTTPClient()
+        check.triggerInput("Check")
+
+        guard !email.isEmpty, !password.isEmpty else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 check.triggerInput("Error")
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 isLoading = false
             }
+            return
         }
-        
-        
+
+        Task {
+            let authRequest = AuthRequest(email: email, password: password)
+            do {
+                let success: AuthResponse = try await client.post(to: Constants.URLs.login, body: authRequest)
+
+                print("Login successful:", success)
+
+                isLoading = false
+                confetti.triggerInput("Trigger explosion")
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation {
+                        showModal = false
+                        isLoggedIn = true
+                    }
+                }
+            } catch {
+                isLoading = false
+
+                isShowingErrorAnimation = true
+                check.triggerInput("Error")
+
+                errorMessage = readableMessage(from: error)
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    showingErrorAlert = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    isShowingErrorAnimation = false
+                }
+            }
+        }
     }
+    
+    func readableMessage(from error: Error) -> String {
+        if let decodingError = error as? DecodingError {
+            switch decodingError {
+            case .dataCorrupted(let ctx):
+                return "We received invalid data. \(ctx.debugDescription)"
+            case .keyNotFound(let key, let ctx):
+                return "Missing field: \(key.stringValue). \(ctx.debugDescription)"
+            case .typeMismatch(_, let ctx):
+                return "Unexpected data type. \(ctx.debugDescription)"
+            case .valueNotFound(_, let ctx):
+                return "Expected value was missing. \(ctx.debugDescription)"
+            @unknown default:
+                return "Unexpected response format."
+            }
+        }
+        let message = (error as NSError).localizedDescription
+        return message.isEmpty ? "Something went wrong. Please try again." : message
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -117,7 +162,7 @@ struct SigninView: View {
             .padding()
             .overlay(
                 ZStack {
-                    if isLoading {
+                    if isLoading || isShowingErrorAnimation {
                         check.view()
                             .frame(width: 100, height: 100)
                             .allowsHitTesting(false)
@@ -131,6 +176,11 @@ struct SigninView: View {
                 Tabs()
                     .interactiveDismissDisabled(true)
             }
+            .alert("Sign In Failed", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage.isEmpty ? "Something went wrong. Please try again." : errorMessage)
+            }
         }
     }
 }
@@ -138,3 +188,4 @@ struct SigninView: View {
 #Preview {
     SigninView(showModal: .constant(true), isLoggedIn: .constant(false))
 }
+

@@ -39,8 +39,8 @@ struct OnboardingView: View {
                                 Image(systemName: "xmark")
                                     .frame(width: 36, height: 36)
                                     .foregroundStyle(.black)
-                                    .mask(Circle())
                                     .background(.white)
+                                    .clipShape(Circle())
                                     .shadow(color:
                                                 Color("Shadow").opacity(0.3),
                                             radius: 5, x:0, y:5
@@ -101,7 +101,7 @@ struct OnboardingView: View {
                     }
                 }
             
-            Text(" Messy portfolios? Unify your assets with Unitrack.")
+            Text("Messy portfolios? Unify your assets with Unitrack.")
                 .customFont(.footnote)
                 .opacity(0.7)
         }
