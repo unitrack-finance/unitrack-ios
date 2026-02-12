@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct StatItem: Identifiable {
-    let id = UUID()
+struct StatItem: Identifiable, Codable {
+    let id: String
     let title: String
     let subtitle: String
     let value: String

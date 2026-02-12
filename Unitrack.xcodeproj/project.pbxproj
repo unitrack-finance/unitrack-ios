@@ -11,6 +11,7 @@
 		7D200C712F3A69FA00C1D040 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 7D200C702F3A69FA00C1D040 /* RevenueCat */; };
 		7D200C732F3A69FA00C1D040 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 7D200C722F3A69FA00C1D040 /* RevenueCatUI */; };
 		7D86D77E2F3047EA00F7F553 /* RiveRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 7D86D77D2F3047EA00F7F553 /* RiveRuntime */; };
+		7D90E1822F3E91CF009A97B0 /* LinkKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7D90E1812F3E91CF009A97B0 /* LinkKit */; };
 		7DCF83D32F3B0D4A00D532D5 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 7DCF83D22F3B0D4A00D532D5 /* Secrets.xcconfig */; };
 		7DCF83DE2F3B152E00D532D5 /* GoogleGenerativeAI in Frameworks */ = {isa = PBXBuildFile; productRef = 7DCF83DD2F3B152E00D532D5 /* GoogleGenerativeAI */; };
 /* End PBXBuildFile section */
@@ -80,6 +81,7 @@
 				7D86D77E2F3047EA00F7F553 /* RiveRuntime in Frameworks */,
 				7D200C712F3A69FA00C1D040 /* RevenueCat in Frameworks */,
 				7DCF83DE2F3B152E00D532D5 /* GoogleGenerativeAI in Frameworks */,
+				7D90E1822F3E91CF009A97B0 /* LinkKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -146,6 +148,7 @@
 				7D200C702F3A69FA00C1D040 /* RevenueCat */,
 				7D200C722F3A69FA00C1D040 /* RevenueCatUI */,
 				7DCF83DD2F3B152E00D532D5 /* GoogleGenerativeAI */,
+				7D90E1812F3E91CF009A97B0 /* LinkKit */,
 			);
 			productName = Unitrack;
 			productReference = 7D5A2A942F29CA8400D7BEAD /* Unitrack.app */;
@@ -233,6 +236,7 @@
 				7D86D77C2F3047EA00F7F553 /* XCRemoteSwiftPackageReference "rive-ios" */,
 				7D200C6D2F3A69FA00C1D040 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				7DCF83DC2F3B152E00D532D5 /* XCRemoteSwiftPackageReference "generative-ai-swift" */,
+				7D90E1802F3E91CF009A97B0 /* XCRemoteSwiftPackageReference "plaid-link-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7D5A2A952F29CA8400D7BEAD /* Products */;
@@ -641,6 +645,14 @@
 				version = 6.14.0;
 			};
 		};
+		7D90E1802F3E91CF009A97B0 /* XCRemoteSwiftPackageReference "plaid-link-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/plaid/plaid-link-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.0.4;
+			};
+		};
 		7DCF83DC2F3B152E00D532D5 /* XCRemoteSwiftPackageReference "generative-ai-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/generative-ai-swift";
@@ -666,6 +678,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7D86D77C2F3047EA00F7F553 /* XCRemoteSwiftPackageReference "rive-ios" */;
 			productName = RiveRuntime;
+		};
+		7D90E1812F3E91CF009A97B0 /* LinkKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7D90E1802F3E91CF009A97B0 /* XCRemoteSwiftPackageReference "plaid-link-ios-spm" */;
+			productName = LinkKit;
 		};
 		7DCF83DD2F3B152E00D532D5 /* GoogleGenerativeAI */ = {
 			isa = XCSwiftPackageProductDependency;

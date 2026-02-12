@@ -8,15 +8,15 @@
 import SwiftUI
 
 struct PositionView: View {
-    let assets: [Asset]
+    let holdings: [HoldingItem]
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 16) {
             Text("Positions")
                 .customFont(.headline)
             
             VStack(alignment: .leading, spacing: 12) {
-                ForEach(assets) { item in
+                ForEach(holdings) { item in
                     AssetCard(item: item)
                 }
             }
@@ -24,41 +24,62 @@ struct PositionView: View {
     }
 }
 
-
 private struct AssetCard: View {
-    let item: Asset
+    let item: HoldingItem
+    
     var body: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                AsyncImage(url: URL(string: item.imageUrl)) { image in
-                    image
-                        .resizable()
-                        .background(Circle())
-                        .padding(12)
-                        .aspectRatio(contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 40))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 40)
-                                    .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                            )
-                } placeholder: {
-                    ProgressView()
+        HStack(spacing: 12) {
+            ZStack {
+                if let icon = item.icon, let url = URL(string: icon) {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: {
+                        placeholderIcon
+                    }
+                } else {
+                    placeholderIcon
                 }
-                    .frame(width: 54, height: 54)
-                VStack(alignment: .leading) {
-                    Text(item.ticker)
-                        .customFont(.subheadline)
-                    Text(item.name)
-                        .customFont(.footnote)
-                        .opacity(0.5)
+            }
+            .frame(width: 48, height: 48)
+            .clipShape(Circle())
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.ticker ?? item.name)
+                    .customFont(.subheadline)
+                    .foregroundStyle(Color.textPrimary)
+                
+                Text(item.name)
+                    .customFont(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(item.valueString)
+                    .customFont(.body)
+                    .foregroundStyle(Color.textPrimary)
+                
+                if let price = item.price {
+                    Text(String(format: "$%.2f", price))
+                        .customFont(.caption2)
+                        .foregroundStyle(Color.textSecondary)
                 }
-                Spacer()
-                VStack(alignment: .leading) {
-                    Text(item.price)
-                        .customFont(.body)
-                }
-                    
             }
         }
+        .padding(.vertical, 8)
+    }
+    
+    private var placeholderIcon: some View {
+        Circle()
+            .fill(Color.cardBackgroundSecondary)
+            .overlay(
+                Image(systemName: "briefcase.fill")
+                    .foregroundStyle(Color.textSecondary)
+                    .font(.system(size: 20))
+            )
     }
 }

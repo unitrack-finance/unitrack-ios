@@ -18,6 +18,19 @@ enum ManualAssetType: String, CaseIterable, Identifiable {
     case art = "Art"
     
     var id: String { rawValue }
+    
+    var apiValue: String {
+        switch self {
+        case .crypto: return "CRYPTO"
+        case .bond: return "BOND"
+        case .cash: return "CASH"
+        case .realEstate: return "REAL_ESTATE"
+        case .nft: return "NFT"
+        case .commodities: return "COMMODITY"
+        case .p2p: return "P2P_LOAN"
+        case .art: return "COLLECTIBLE"
+        }
+    }
 }
 
 struct ManualTransactionScreen: View {
@@ -31,7 +44,6 @@ struct ManualTransactionScreen: View {
     @State private var currentValue = ""
     @State private var selectedCurrency = "KES"
     
-    // Specific Fields
     @State private var propertyTaxDate = Date()
     @State private var isinNumber = ""
     @State private var nominalQuantity = ""
@@ -41,6 +53,11 @@ struct ManualTransactionScreen: View {
     @State private var cryptoSymbol = ""
     @State private var cryptoQuantity = ""
     @State private var showCryptoSearch = false
+    
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var showAlert = false
+    @State private var isSuccess = false
     
     let currencies = ["KES", "USD", "EUR", "GBP"]
     
@@ -197,16 +214,21 @@ struct ManualTransactionScreen: View {
                 // Action Buttons
                 VStack(spacing: 12) {
                     Button {
-                        // Add Action
-                        dismiss()
+                        saveTransaction()
                     } label: {
-                        Text("Add Transaction")
-                            .customFont(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.textPrimary, in: RoundedRectangle(cornerRadius: 8))
-                            .foregroundStyle(Color.screenBackground)
+                        if isSaving {
+                            ProgressView()
+                                .tint(.screenBackground)
+                        } else {
+                            Text("Add Transaction")
+                                .customFont(.headline)
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.textPrimary, in: RoundedRectangle(cornerRadius: 8))
+                    .foregroundStyle(Color.screenBackground)
+                    .disabled(isSaving)
                     
                     Button {
                         resetForm(for: selectedType)
@@ -229,6 +251,13 @@ struct ManualTransactionScreen: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showCryptoSearch) {
             CryptoSearchSheet(selectedSymbol: $cryptoSymbol)
+        }
+        .alert(isSuccess ? "Success" : "Error", isPresented: $showAlert) {
+            Button("OK") {
+                if isSuccess { dismiss() }
+            }
+        } message: {
+            Text(isSuccess ? "Asset added successfully." : (saveError ?? "An unknown error occurred."))
         }
     }
     
@@ -343,6 +372,46 @@ struct ManualTransactionScreen: View {
         let tx = Double(taxes) ?? 0
         return String(format: "%.2f", p + tc + tx)
     }
+    
+    private func saveTransaction() {
+        isSaving = true
+        saveError = nil
+        
+        Task {
+            do {
+                let val = Double(currentValue) ?? Double(price) ?? 0
+                _ = Double(cryptoQuantity) ?? Double(nominalQuantity) ?? 1.0
+                let ticker: String? = selectedType == .crypto ? (cryptoSymbol.isEmpty ? nil : cryptoSymbol) : nil
+
+                // TODO: Replace this placeholder with the actual selected portfolio id from your app state.
+                let _: String = "default"
+
+                let payload = CreateManualAssetPayload(
+                    ticker: ticker ?? "",
+                    name: description.isEmpty ? "\(selectedType.rawValue) Asset" : description,
+                    type: selectedType.apiValue,
+                    value: val,
+                    currency: selectedCurrency,
+                    date: "",
+                )
+                
+                _ = try await ManualAssetService.shared.createAsset(ticker: payload.ticker, name: payload.name, type: payload.type, value: payload.value, currency: payload.currency, date: date)
+                
+                await MainActor.run {
+                    isSaving = false
+                    isSuccess = true
+                    showAlert = true
+                }
+            } catch {
+                await MainActor.run {
+                    isSaving = false
+                    isSuccess = false
+                    saveError = error.userFriendlyMessage
+                    showAlert = true
+                }
+            }
+        }
+    }
 }
 
 struct CryptoSearchSheet: View {
@@ -390,3 +459,4 @@ struct CryptoSearchSheet: View {
             .preferredColorScheme(.light)
     }
 }
+

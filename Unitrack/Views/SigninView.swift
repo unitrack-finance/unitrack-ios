@@ -21,9 +21,8 @@ struct SigninView: View {
     let check = RiveViewModel(fileName: "check", stateMachineName: "State Machine 1")
     let confetti = RiveViewModel(fileName: "confetti", stateMachineName: "State Machine 1")
     
-    func logIn() {
+    func authenticate() {
         isLoading = true
-        let client = HTTPClient()
         check.triggerInput("Check")
 
         guard !email.isEmpty, !password.isEmpty else {
@@ -39,9 +38,14 @@ struct SigninView: View {
         Task {
             let authRequest = AuthRequest(email: email, password: password)
             do {
-                let success: AuthResponse = try await client.post(to: Constants.URLs.login, body: authRequest)
+                let response: AuthResponse
+                if isRegistering {
+                    response = try await AuthService.shared.signup(request: authRequest)
+                } else {
+                    response = try await AuthService.shared.login(request: authRequest)
+                }
 
-                print("Login successful:", success)
+                print("Auth successful:", response)
 
                 isLoading = false
                 confetti.triggerInput("Trigger explosion")
@@ -54,10 +58,8 @@ struct SigninView: View {
                 }
             } catch {
                 isLoading = false
-
                 isShowingErrorAnimation = true
                 check.triggerInput("Error")
-
                 errorMessage = readableMessage(from: error)
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -92,7 +94,7 @@ struct SigninView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Text("Sign In")
+                Text(isRegistering ? "Sign Up" : "Sign In")
                     .customFont(.largeTitle)
                 Text("Connect all your portfolios and track them from one place.")
                     .customFont(.headline)
@@ -118,9 +120,9 @@ struct SigninView: View {
                 }
                 
                 Button {
-                    logIn()
+                    authenticate()
                 } label: {
-                    Label("Sign In", systemImage: "arrow.right")
+                    Label(isRegistering ? "Sign Up" : "Sign In", systemImage: "arrow.right")
                         .customFont(.headline)
                         .padding(20)
                         .frame(maxWidth: .infinity)
@@ -139,7 +141,8 @@ struct SigninView: View {
                         .foregroundStyle(.secondary)
                     Rectangle().frame(height: 1).opacity(0.3)
                 }
-                Text("Sign up with Email, Apple or Google")
+                
+                Text(isRegistering ? "Sign up with Email, Apple or Google" : "Sign in with Email, Apple or Google")
                     .customFont(.subheadline)
                     .foregroundColor(.secondary)
                 
@@ -149,6 +152,22 @@ struct SigninView: View {
                     Image("Logo Apple")
                     Spacer()
                     Image("Logo Google")
+                }
+                
+                Button {
+                    withAnimation(.spring()) {
+                        isRegistering.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(isRegistering ? "Already have an account?" : "Don't have an account?")
+                            .customFont(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(isRegistering ? "Sign In" : "Sign Up")
+                            .customFont(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundColor(Color(hex: "F77D8E"))
+                    }
                 }
             }
             .padding(30)
@@ -176,7 +195,7 @@ struct SigninView: View {
                 Tabs()
                     .interactiveDismissDisabled(true)
             }
-            .alert("Sign In Failed", isPresented: $showingErrorAlert) {
+            .alert(isRegistering ? "Sign Up Failed" : "Sign In Failed", isPresented: $showingErrorAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(errorMessage.isEmpty ? "Something went wrong. Please try again." : errorMessage)

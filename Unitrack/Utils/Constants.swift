@@ -8,8 +8,22 @@
 import Foundation
 
 struct Constants {
+    static let baseURL = URL(string: "https://unitrack.definetlynotlocalhost.space/v1")!
+    
     struct URLs {
-        static let register = URL(string: "https://unitrack.definetlynotlocalhost.space/v1/auth/register")!
-        static let login = URL(string: "https://unitrack.definetlynotlocalhost.space/v1/auth/login")!
+        static let auth = baseURL.appendingPathComponent("auth")
+        static let login = auth.appendingPathComponent("login")
+        static let signup = auth.appendingPathComponent("signup")
+        static let refresh = auth.appendingPathComponent("refresh")
+        static let logout = auth.appendingPathComponent("logout")
+        static let profile = auth.appendingPathComponent("profile")
+        
+        static let plaid = baseURL.appendingPathComponent("connections/plaid")
+        static let wallet = baseURL.appendingPathComponent("connections/wallet")
+        
+        static let portfolio = baseURL.appendingPathComponent("portfolio")
+        static let assetsManual = baseURL.appendingPathComponent("assets/manual")
+        static let market = baseURL.appendingPathComponent("market")
+        static let analytics = baseURL.appendingPathComponent("analytics")
     }
 }

@@ -11,7 +11,7 @@ struct DashboardHeader: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Hi, Sylus!")
+                Text("Welcome")
                     .customFont(.title2)
               
                 Text(Date().formatted(.dateTime.day().month(.wide).year()))

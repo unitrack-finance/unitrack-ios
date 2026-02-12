@@ -59,3 +59,19 @@ extension Color {
 
 
 
+extension Double {
+    var asCurrency: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        return formatter.string(from: NSNumber(value: self)) ?? "$\(self)"
+    }
+    
+    var asPercentage: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .percent
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: self / 100)) ?? "\(self)%"
+    }
+}

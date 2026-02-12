@@ -12,7 +12,7 @@ struct HoldingRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: item.icon)
+            Image(systemName: item.icon ?? "square.stack.3d.up.fill")
                 .font(.body)
                 .foregroundStyle(Color.textPrimary)
                 .frame(width: 40, height: 40)
@@ -23,7 +23,7 @@ struct HoldingRow: View {
                     .customFont(.subheadline)
                     .foregroundStyle(Color.textPrimary)
                     .lineLimit(1)
-                Text(item.source)
+                Text(item.source ?? "Manual")
                     .customFont(.caption)
                     .foregroundStyle(Color.textTertiary)
             }
@@ -31,12 +31,12 @@ struct HoldingRow: View {
             Spacer()
             
             VStack(alignment: .trailing, spacing: 3) {
-                Text(item.value)
+                Text(item.valueString)
                     .customFont(.subheadline)
                     .foregroundStyle(Color.textPrimary)
-                Text(item.change)
+                Text(item.changeString)
                     .customFont(.caption)
-                    .foregroundStyle(item.isPositive ? Color.accentGreen : Color.red)
+                    .foregroundStyle((item.change24h ?? 0) >= 0 ? Color.accentGreen : Color.red)
             }
         }
         .padding(14)

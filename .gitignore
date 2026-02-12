@@ -19,3 +19,7 @@ xcuserdata/
 #
 Secrets.xcconfig
 api_contract.md
+intergration.md
+plaid-ios-role.md
+plaid-workflow.md
+

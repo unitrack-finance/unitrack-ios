@@ -11,6 +11,10 @@ struct PortfolioDetailView: View {
     let portfolio: Portfolio
     private static let calendar = Calendar.current
     
+    @State private var fullPortfolio: Portfolio?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    
     @State private var selectedTimePeriod: TimePeriod = .oneMonth
     @State private var selectedDate: Date?
     @State private var chartType: ChartType = .area
@@ -29,105 +33,49 @@ struct PortfolioDetailView: View {
         case candlestick = "Candle"
     }
 
-    private var sampleChartData: [PortfolioChartData] {
-        let calendar = Self.calendar
-        let baseData = [
-            PortfolioChartData(
-                value: 100.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 1))!,
-                open: 95.0,
-                close: 100.0,
-                high: 102.0,
-                low: 94.0,
-                volume: 1_200_000
-            ),
-            PortfolioChartData(
-                value: 105.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 2))!,
-                open: 100.0,
-                close: 105.0,
-                high: 108.0,
-                low: 99.0,
-                volume: 1_450_000
-            ),
-            PortfolioChartData(
-                value: 102.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 5))!,
-                open: 105.0,
-                close: 102.0,
-                high: 106.0,
-                low: 101.0,
-                volume: 1_100_000
-            ),
-            PortfolioChartData(
-                value: 110.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 6))!,
-                open: 102.0,
-                close: 110.0,
-                high: 112.0,
-                low: 101.0,
-                volume: 1_800_000
-            ),
-            PortfolioChartData(
-                value: 108.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 7))!,
-                open: 110.0,
-                close: 108.0,
-                high: 111.0,
-                low: 107.0,
-                volume: 1_300_000
-            ),
-            PortfolioChartData(
-                value: 115.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 8))!,
-                open: 108.0,
-                close: 115.0,
-                high: 116.0,
-                low: 107.5,
-                volume: 1_650_000
-            ),
-            PortfolioChartData(
-                value: 112.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 9))!,
-                open: 115.0,
-                close: 112.0,
-                high: 117.0,
-                low: 111.0,
-                volume: 1_400_000
-            ),
-            PortfolioChartData(
-                value: 118.0,
-                date: calendar.date(from: DateComponents(year: 2024, month: 2, day: 12))!,
-                open: 112.0,
-                close: 118.0,
-                high: 119.0,
-                low: 111.5,
-                volume: 1_900_000
-            )
-        ]
-        return baseData
+    private var chartData: [PortfolioChartData] {
+        guard let snapshots = fullPortfolio?.snapshots else { return [] }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        
+        var results: [PortfolioChartData] = []
+        var previousValue: Double?
+        
+        for snapshot in snapshots {
+            if let date = formatter.date(from: snapshot.date) {
+                let currentVal = snapshot.value
+                let openVal = previousValue ?? currentVal
+                
+                results.append(PortfolioChartData(
+                    value: currentVal,
+                    date: date,
+                    open: openVal,
+                    close: currentVal,
+                    high: max(openVal, currentVal),
+                    low: min(openVal, currentVal),
+                    volume: 0
+                ))
+                previousValue = currentVal
+            }
+        }
+        return results.sorted { $0.date < $1.date }
     }
     
-    private let assets: [Asset] = [
-        .init(ticker: "MSFT", name: "Microsoft", price: "$292.66", imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png?t=1722952497"),
-        .init(ticker: "ETH", name: "Ethereum", price: "$2077.25", imageUrl: "https://cdn.pixabay.com/photo/2021/05/24/09/15/ethereum-logo-6278329_1280.png"),
-        .init(ticker: "AAPL", name: "Apple", price: "$456.87", imageUrl: "https://g.foolcdn.com/art/companylogos/square/aapl.png"),
-        .init(ticker: "DOW", name: "Dow Jones", price: "$26,598.12", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMU2Zf9sCjK9NFBEIy3OAiD7AqEy1_vXv4pg&s")
-    ]
     
     private var displayedValue: String {
-        if let selectedDate, let selected = sampleChartData.first(where: { $0.date == selectedDate }) {
+        if let selectedDate, let selected = chartData.first(where: { $0.date == selectedDate }) {
             return String(format: "$%.2f", selected.close)
         }
-        return portfolio.balance
+        return fullPortfolio?.balanceFormatted ?? portfolio.balanceFormatted
     }
     
     private var displayedChange: (value: String, percentage: String, isPositive: Bool) {
-        guard let selectedDate, let selected = sampleChartData.first(where: { $0.date == selectedDate }) else {
-            return ("+$1,980", "+0.92%", true)
+        guard let selectedDate, let selected = chartData.first(where: { $0.date == selectedDate }) else {
+            // Default to overall portfolio change if available, otherwise just mock or 0
+            return ("+$0.00", "0.00%", true)
         }
         let change = selected.close - selected.open
-        let percentChange = (change / selected.open) * 100
+        let percentChange = selected.open != 0 ? (change / selected.open) * 100 : 0
         let isPositive = change >= 0
         return (
             String(format: "%@$%.2f", isPositive ? "+" : "", abs(change)),
@@ -199,10 +147,18 @@ struct PortfolioDetailView: View {
                 }
                 
                 VStack(spacing: 12) {
-                    if chartType == .area {
-                        AreaChartView(chartData: sampleChartData, selectedDate: $selectedDate)
+                    if isLoading {
+                        ProgressView()
+                            .frame(height: 200)
+                    } else if chartData.isEmpty {
+                        ContentUnavailableView("No Chart Data", systemImage: "chart.line.uptrend.xyaxis", description: Text("Historical data is not yet available for this portfolio."))
+                            .frame(height: 200)
                     } else {
-                        CandlestickChartView(chartData: sampleChartData, selectedDate: $selectedDate)
+                        if chartType == .area {
+                            AreaChartView(chartData: chartData, selectedDate: $selectedDate)
+                        } else {
+                            CandlestickChartView(chartData: chartData, selectedDate: $selectedDate)
+                        }
                     }
                 }
                 
@@ -229,9 +185,11 @@ struct PortfolioDetailView: View {
                 .padding(4)
                 .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 
-                StatsGridView(chartData: sampleChartData, formatVolume: formatVolume)
+                StatsGridView(chartData: chartData, formatVolume: formatVolume)
                 
-                PositionView(assets: assets)
+                if let holdings = fullPortfolio?.holdings {
+                    PositionView(holdings: holdings)
+                }
                 
                 Spacer()
             }
@@ -240,6 +198,27 @@ struct PortfolioDetailView: View {
         .background(Color.screenBackground)
         .navigationTitle(portfolio.name)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            fetchData()
+        }
+    }
+    
+    private func fetchData() {
+        isLoading = true
+        Task {
+            do {
+                let detail = try await PortfolioService.shared.getPortfolioDetail(id: portfolio.id)
+                await MainActor.run {
+                    self.fullPortfolio = detail
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.userFriendlyMessage
+                    self.isLoading = false
+                }
+            }
+        }
     }
 
     private func formatVolume(_ volume: Double) -> String {

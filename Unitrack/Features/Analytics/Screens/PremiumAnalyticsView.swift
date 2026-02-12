@@ -10,6 +10,13 @@ struct PremiumAnalyticsView: View {
     @State private var selectedTimeRange = 3 // Index for 1Y
     let timeRanges = ["1W", "1M", "6M", "1Y", "ALL"]
     
+    @State private var health: HealthResponse?
+    @State private var exposure: [RegionExposure] = []
+    @State private var manualPortfolios: [Portfolio] = []
+    @State private var projections: [String: AmortizationResponse] = [:]
+    @State private var isLoading = false
+    @State private var errorMessage: String?
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
@@ -27,10 +34,53 @@ struct PremiumAnalyticsView: View {
                 
                 // 5. Watchlist Performance
                 watchlistSection
+                
+                // 6. Manual Asset Projections
+                amortizationSection
             }
             .padding(16)
         }
         .background(Color.screenBackground.ignoresSafeArea())
+        .onAppear {
+            Task { await fetchData() }
+        }
+    }
+    
+    private func fetchData() async {
+        isLoading = true
+        do {
+            async let healthTask = AnalyticsService.shared.getHealth()
+            async let exposureTask = AnalyticsService.shared.getExposure()
+            async let portfoliosTask = PortfolioService.shared.getPortfolios()
+            
+            let (healthRes, exposureRes, portfoliosRes) = try await (healthTask, exposureTask, portfoliosTask)
+            
+            let manualOnes = portfoliosRes.filter { $0.type == "MANUAL" }
+            
+            await MainActor.run {
+                self.health = healthRes
+                self.exposure = exposureRes
+                self.manualPortfolios = manualOnes
+            }
+            
+            // Fetch projections for manual portfolios
+            for portfolio in manualOnes {
+                if let proj = try? await AnalyticsService.shared.getAmortization(id: portfolio.id) {
+                    await MainActor.run {
+                        self.projections[portfolio.id] = proj
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to load analytics"
+                self.isLoading = false
+            }
+        }
     }
     
     private var aiAuditCard: some View {
@@ -42,21 +92,21 @@ struct PremiumAnalyticsView: View {
                 
                 Spacer()
                 
-                CircularHealthProgress(progress: 0.82)
+                CircularHealthProgress(progress: Double(health?.score ?? 0) / 100.0)
                     .frame(width: 44, height: 44)
             }
             
-            Text("Proactive Insight")
+            Text(health?.status ?? "Analyzing...")
                 .customFont(.caption)
                 .foregroundStyle(Color.textSecondary)
             
-            Text("Your tech sector concentration is at 42%. Consider adding utilities or consumer staples to lower volatility.")
+            Text(health?.summary ?? "Gathering insights for your portfolio...")
                 .customFont(.body)
                 .foregroundStyle(Color.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             
             HStack {
-                Text("Health Score: 82/100")
+                Text("Health Score: \(health?.score ?? 0)/100")
                     .customFont(.caption2)
                     .foregroundStyle(Color.textSecondary)
                 
@@ -65,7 +115,7 @@ struct PremiumAnalyticsView: View {
                 Button("Full Health Report") {
                     // Action
                 }
-                .font(.custom("Outfit-Regular", size: 12)) // Fallback or use customFont logic if accessible
+                .font(.custom("Outfit-Regular", size: 12)) 
                 .foregroundStyle(.blue)
             }
         }
@@ -162,29 +212,35 @@ struct PremiumAnalyticsView: View {
     
     private var diversificationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Sector Diversification")
+            Text("Geographic Exposure")
                 .customFont(.headline)
                 .foregroundStyle(Color.textPrimary)
             
             HStack(spacing: 20) {
-                Chart(dummySectorData) { sector in
-                    BarMark(
-                        x: .value("Value", sector.value),
-                        stacking: .normalized
-                    )
-                    .foregroundStyle(by: .value("Name", sector.name))
-                    .cornerRadius(4)
-                }
-                .frame(height: 44)
-                .chartLegend(.hidden)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(dummySectorData.prefix(3)) { sector in
-                        HStack(spacing: 8) {
-                            Circle().fill(Color.blue).frame(width: 8, height: 8)
-                            Text(sector.name).customFont(.caption).foregroundStyle(Color.textPrimary)
-                            Spacer()
-                            Text("\(Int(sector.value))%").customFont(.caption).foregroundStyle(Color.textSecondary)
+                if exposure.isEmpty {
+                    Text("No exposure data available")
+                        .customFont(.caption)
+                        .foregroundStyle(Color.textSecondary)
+                } else {
+                    Chart(exposure) { region in
+                        BarMark(
+                            x: .value("Value", region.value),
+                            stacking: .normalized
+                        )
+                        .foregroundStyle(by: .value("Region", region.region))
+                        .cornerRadius(4)
+                    }
+                    .frame(height: 44)
+                    .chartLegend(.hidden)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(exposure.prefix(3)) { region in
+                            HStack(spacing: 8) {
+                                Circle().fill(region.region == "North America" ? .blue : (region.region.contains("Crypto") ? .purple : .green)).frame(width: 8, height: 8)
+                                Text(region.region).customFont(.caption).foregroundStyle(Color.textPrimary)
+                                Spacer()
+                                Text("\(Int(region.percentage))%").customFont(.caption).foregroundStyle(Color.textSecondary)
+                            }
                         }
                     }
                 }
@@ -222,6 +278,77 @@ struct PremiumAnalyticsView: View {
                     }
                 }
                 .padding(.vertical, 8)
+            }
+        }
+        .padding(16)
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var amortizationSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Asset Projections")
+                .customFont(.headline)
+                .foregroundStyle(Color.textPrimary)
+            
+            if manualPortfolios.isEmpty {
+                Text("Add a manual asset to see 12-month projections.")
+                    .customFont(.caption)
+                    .foregroundStyle(Color.textSecondary)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(manualPortfolios) { portfolio in
+                    if let projection = projections[portfolio.id] {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text(projection.assetName)
+                                    .customFont(.subheadline)
+                                    .bold()
+                                    .foregroundStyle(Color.textPrimary)
+                                
+                                Spacer()
+                                
+                                Text(projection.projectionType)
+                                    .customFont(.caption2)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(projection.projectionType == "Appreciation" ? Color.green.opacity(0.1) : Color.red.opacity(0.1), in: Capsule())
+                                    .foregroundStyle(projection.projectionType == "Appreciation" ? .green : .red)
+                            }
+                            
+                            Chart {
+                                ForEach(projection.projection, id: \.month) { item in
+                                    LineMark(
+                                        x: .value("Month", item.month),
+                                        y: .value("Value", item.value)
+                                    )
+                                    .foregroundStyle(projection.projectionType == "Appreciation" ? .green : .red)
+                                }
+                            }
+                            .frame(height: 100)
+                            .chartXAxis {
+                                AxisMarks(values: projection.projection.map { $0.month }) { _ in
+                                    AxisValueLabel().font(.system(size: 8))
+                                }
+                            }
+                            
+                            HStack {
+                                Text("Monthly Rate: \(String(format: "%.1f", projection.monthlyRate))%")
+                                    .customFont(.caption2)
+                                    .foregroundStyle(Color.textSecondary)
+                                
+                                Spacer()
+                                
+                                let finalVal = projection.projection.last?.value ?? 0
+                                Text("End of Year: \(finalVal.formatted(.currency(code: "USD")))")
+                                    .customFont(.caption2)
+                                    .bold()
+                                    .foregroundStyle(Color.textPrimary)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color.cardBackgroundSecondary, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                }
             }
         }
         .padding(16)

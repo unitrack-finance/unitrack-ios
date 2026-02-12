@@ -12,52 +12,24 @@ import GoogleGenerativeAI
 class AIService {
     static let shared = AIService()
     
-    private let model: GenerativeModel
-    
-    // We use a simple chat history for context
-    private(set) var chatHistory: [ChatHistoryItem] = []
-    
-    private init() {
-        // Initialize Gemini with the API Key from Configuration
-        // Using gemini-1.5-flash for speed and efficiency
-        self.model = GenerativeModel(
-            name: "gemini-1.5-flash",
-            apiKey: Configuration.APIKeys.gemini
-        )
-    }
+    private init() {}
     
     // MARK: - Portfolio Analysis
     
-    /// Generates a proactive insight based on a portfolio snapshot
     func generatePortfolioInsight(portfolioData: String) async throws -> String {
-        let prompt = """
-        You are Unitrack AI, a professional financial analyst.
-        Analyze this portfolio snapshot and provide ONE concise, actionable insight (max 20 words).
-        Focus on risk, diversification, or sector concentration.
-        
-        Portfolio Snapshot:
-        \(portfolioData)
-        """
-        
-        let response = try await model.generateContent(prompt)
-        return response.text ?? "Unable to generate insight."
+        // We can either call a specific health/insights route or just use chat with a system prompt
+        // For now, let's assume the backend health route handles this or use chat
+        return try await AnalyticsService.shared.chat(message: "Analyze this portfolio: \(portfolioData)")
     }
     
     // MARK: - Chat Interaction
     
-    /// Sends a user message to the AI and streams the response
     func streamChat(message: String, history: [ModelContent]) -> AsyncThrowingStream<String, Error> {
-        let chat = model.startChat(history: history)
-        
         return AsyncThrowingStream { continuation in
             Task {
                 do {
-                    let stream = chat.sendMessageStream(message)
-                    for try await chunk in stream {
-                        if let text = chunk.text {
-                            continuation.yield(text)
-                        }
-                    }
+                    let response = try await AnalyticsService.shared.chat(message: message)
+                    continuation.yield(response)
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)

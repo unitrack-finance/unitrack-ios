@@ -9,10 +9,10 @@ import SwiftUI
 
 struct PortfolioOverviewCard: View {
     let portfolios: [Portfolio]
+    let summary: PortfolioSummary?
     @Binding var selectedTimeframe: String
     var onAddPortfolio: () -> Void
 
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -20,33 +20,11 @@ struct PortfolioOverviewCard: View {
                     Text("Total Balance")
                         .customFont(.caption)
                       
-                    Text("$128,540")
-                        .customFont(.prominentTitle)
-                        
+                    Text(summary?.totalValue.asCurrency ?? "$0.00")
+                        .customFont(.largeTitle)
                 }
                 
                 Spacer()
-                
-                Menu {
-                    Button("7 Days") { selectedTimeframe = "7 Days" }
-                    Button("30 Days") { selectedTimeframe = "30 Days" }
-                    Button("90 Days") { selectedTimeframe = "90 Days" }
-                    Button("1 Year") { selectedTimeframe = "1 Year" }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(selectedTimeframe)
-                            .customFont(.caption)
-                        Image(systemName: "chevron.down")
-                            .font(.caption2)
-                    }
-                  
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .stroke(Color.textTertiary, lineWidth: 1)
-                    )
-                }
             }
             
             HStack(spacing: 12) {

@@ -1,98 +1,58 @@
-//
-//  AutomaticConnectionScreen.swift
-//  Unitrack
-//
-
 import SwiftUI
+import LinkKit
+import UIKit
 
-struct AutomaticConnectionScreen: View {
+struct AutomaticConnectionScreen: SwiftUI.View {
     let institution: Institution
-    @State private var phoneNumber = ""
-    @State private var pin = ""
-    @State private var selectedCountry: CountryCode = CountryCode.samples.first(where: { $0.code == "+385" }) ?? CountryCode.samples[0]
-    @State private var showCountryPicker = false
-    @State private var storeCredentials = false
-    @State private var importCashBalances = false
+    @SwiftUI.Environment(\.dismiss) private var dismiss
+    
+    @State private var linkToken: String?
+    @State private var handler: Handler?
+    @State private var isLoading = false
+    @State private var errorMessage: String?
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 32) {
-                // Visual Header (Reused from ImportOptions)
-                VisualConnectionHeader(institution: institution)
-                    .padding(.top, 40)
+        VStack(spacing: 32) {
+            // Visual Header
+            VisualConnectionHeader(institution: institution)
+                .padding(.top, 40)
+            
+            VStack(spacing: 12) {
+                Text("Automatic connection")
+                    .customFont(.title2)
                 
-                VStack(spacing: 12) {
-                    Text("Automatic connection")
-                        .customFont(.title2)
-                    
-                    Text("Securely import your \(institution.name) account. All data is encrypted and stored by Plaid")
-                        .customFont(.body)
-                        .foregroundStyle(Color.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-                }
-                
-                // Form Fields
-                VStack(spacing: 16) {
-                    // Phone number input with country selector
-                    HStack(spacing: 0) {
-                        Button(action: { showCountryPicker = true }) {
-                            HStack(spacing: 4) {
-                                Text(selectedCountry.flag)
-                                Text(selectedCountry.code)
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 12, weight: .bold))
-                            }
-                            .customFont(.headline)
-                            .foregroundStyle(Color.textPrimary)
-                            .padding(.horizontal, 12)
-                            .frame(maxHeight: .infinity)
-                            .background(Color.cardBackgroundSecondary.opacity(0.5))
-                        }
-                        
-                        Divider()
-                            .frame(height: 24)
-                        
-                        TextField("Phone number", text: $phoneNumber)
-                            .keyboardType(.phonePad)
-                            .customFont(.body)
-                            .padding(.leading, 12)
-                    }
-                    .frame(height: 56)
-                    .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    
-                    // PIN/Password field
-                    SecureField("****", text: $pin)
-                        .customFont(.body)
-                        .padding(.horizontal, 16)
-                        .frame(height: 56)
-                        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-                .padding(.horizontal, 20)
-                
-                // Checkboxes
-                VStack(alignment: .leading, spacing: 20) {
-                    CheckboxView(isOn: $storeCredentials, label: "Store credentials") {
-                        // Info action
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Permissions")
-                            .customFont(.headline)
-                            .foregroundStyle(Color.textPrimary)
-                        
-                        CheckboxView(isOn: $importCashBalances, label: "Import my cash balances")
-                    }
-                }
-                .padding(.horizontal, 24)
-                
-                Spacer(minLength: 40)
-                
+                Text("Securely import your \(institution.name) account. All data is encrypted and stored by Plaid")
+                    .customFont(.body)
+                    .foregroundStyle(Color.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            
+            if let error = errorMessage {
+                Text(error)
+                    .customFont(.caption)
+                    .foregroundColor(.red)
+                    .padding()
+                    .background(Color.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+            }
+            
+            Spacer()
+            
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+            } else {
                 // Continue Button
                 Button(action: {
-                    // Finalize connection
+                    if let handler = handler {
+                        if let topVC = UIApplication.topViewController() {
+                            handler.open(presentUsing: .viewController(topVC))
+                        }
+                    } else {
+                        Task { await fetchAndOpen() }
+                    }
                 }) {
-                    Text("Continue")
+                    Text(handler != nil ? "Open Plaid Link" : "Connect Account")
                         .customFont(.headline)
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
@@ -100,14 +60,91 @@ struct AutomaticConnectionScreen: View {
                         .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 20)
             }
+            
+            Text("By continuing, you agree to Plaid's Privacy Policy")
+                .customFont(.caption)
+                .foregroundStyle(Color.textSecondary)
+                .padding(.bottom, 20)
         }
         .background(Color.screenBackground)
         .navigationTitle(institution.name)
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showCountryPicker) {
-            CountryCodePickerSheet(selectedCountry: $selectedCountry)
+        .onAppear {
+            Task { await fetchLinkToken() }
+        }
+    }
+    
+    private func fetchLinkToken() async {
+        guard linkToken == nil else { return }
+        isLoading = true
+        do {
+            let token = try await PlaidService.shared.fetchLinkToken()
+            self.linkToken = token
+            createHandler(token: token)
+            isLoading = false
+        } catch {
+            isLoading = false
+            errorMessage = "Failed to initialize Plaid. Please try again."
+        }
+    }
+    
+    private func fetchAndOpen() async {
+        await fetchLinkToken()
+        if let handler = handler {
+            if let topVC = UIApplication.topViewController() {
+                handler.open(presentUsing: .viewController(topVC))
+            }
+        }
+    }
+    
+    private func createHandler(token: String) {
+        var config = LinkTokenConfiguration(token: token) { success in
+            handleSuccess(publicToken: success.publicToken, metadata: success.metadata)
+        }
+        
+        config.onExit = { exit in
+            if let error = exit.error {
+                print("Plaid exit error: \(error)")
+                errorMessage = "Connection was interrupted."
+            }
+        }
+        
+        let result = Plaid.create(config)
+        switch result {
+        case .success(let handler):
+            self.handler = handler
+        case .failure(let error):
+            print("Plaid creation failure: \(error)")
+            errorMessage = "Failed to create Plaid handler."
+        }
+    }
+    
+    private func handleSuccess(publicToken: String, metadata: SuccessMetadata) {
+        isLoading = true
+        Task {
+            do {
+                let institutionId = metadata.institution.id
+                let accountIds = metadata.accounts.map { $0.id }
+                
+                try await PlaidService.shared.exchangePublicToken(
+                    publicToken: publicToken,
+                    institutionId: institutionId,
+                    accountIds: accountIds
+                )
+                
+                await MainActor.run {
+                    isLoading = false
+                    dismiss()
+                    // Trigger dashboard refresh if needed (e.g., via notification)
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshDashboard"), object: nil)
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = "Failed to complete connection. Please contact support."
+                }
+            }
         }
     }
 }
@@ -191,3 +228,26 @@ struct VisualConnectionHeader: View {
             .preferredColorScheme(.dark)
     }
 }
+extension UIApplication {
+    static func topViewController(base: UIViewController? = {
+        if let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+           let window = scene.windows.first(where: { $0.isKeyWindow }) {
+            return window.rootViewController
+        }
+        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController
+    }()) -> UIViewController? {
+        if let nav = base as? UINavigationController {
+            return topViewController(base: nav.visibleViewController)
+        }
+        if let tab = base as? UITabBarController {
+            return topViewController(base: tab.selectedViewController)
+        }
+        if let presented = base?.presentedViewController {
+            return topViewController(base: presented)
+        }
+        return base
+    }
+}
+

@@ -9,17 +9,17 @@ import SwiftUI
 
 struct AssetView: View {
     @State private var searchText = ""
-    @State private var selectedAsset: AssetSearchResult?
+    @State private var selectedAsset: MarketSearchResult?
     
     // Dummy Data
     let assets = [
-        AssetSearchResult(ticker: "AAPL", name: "Apple Inc.", type: "Stock", logoUrl: "apple.logo"),
-        AssetSearchResult(ticker: "MSFT", name: "Microsoft Corp", type: "Stock", logoUrl: "windows_logo"), // System image placeholder
-        AssetSearchResult(ticker: "BTC", name: "Bitcoin", type: "Crypto", logoUrl: "bitcoinsign.circle.fill"),
-        AssetSearchResult(ticker: "ETH", name: "Ethereum", type: "Crypto", logoUrl: "diamond.fill")
+        MarketSearchResult(ticker: "AAPL", name: "Apple Inc.", type: "Stock", logoUrl: nil),
+        MarketSearchResult(ticker: "MSFT", name: "Microsoft Corp", type: "Stock", logoUrl: nil),
+        MarketSearchResult(ticker: "BTC", name: "Bitcoin", type: "Crypto", logoUrl: nil),
+        MarketSearchResult(ticker: "ETH", name: "Ethereum", type: "Crypto", logoUrl: nil)
     ]
     
-    var filteredAssets: [AssetSearchResult] {
+    var filteredAssets: [MarketSearchResult] {
         if searchText.isEmpty {
             return assets
         } else {
@@ -59,14 +59,14 @@ struct AssetView: View {
             .background(Color.screenBackground.ignoresSafeArea())
             .navigationTitle("Assets")
             .navigationDestination(item: $selectedAsset) { asset in
-                AssetDetailsView(asset: asset)
+                MarketAssetDetailView(ticker: asset.ticker)
             }
         }
     }
 }
 
 struct AssetRow: View {
-    let asset: AssetSearchResult
+    let asset: MarketSearchResult
     
     var body: some View {
         HStack(spacing: 16) {

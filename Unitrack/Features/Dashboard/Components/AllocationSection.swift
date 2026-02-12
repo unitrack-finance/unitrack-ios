@@ -8,7 +8,28 @@
 import SwiftUI
 
 struct AllocationSection: View {
-    let allocation: [AllocationItem]
+    let allocationItems: [AllocationResponseItem]
+    
+    private var uiItems: [AllocationItem] {
+        allocationItems.map { item in
+            AllocationItem(
+                name: item.category,
+                value: Int(item.value),
+                color: color(for: item.category),
+                source: .manual // Placeholder as response doesn't provide source
+            )
+        }
+    }
+    
+    private func color(for category: String) -> Color {
+        switch category.lowercased() {
+        case "stocks": return .blue
+        case "crypto": return .orange
+        case "real estate": return .green
+        case "cash": return .teal
+        default: return .purple
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -21,7 +42,7 @@ struct AllocationSection: View {
             }
 
             HStack(spacing: 20) {
-                AllocationRingView(items: allocation)
+                AllocationRingView(items: uiItems)
                     .frame(height: 300)
             }
         }

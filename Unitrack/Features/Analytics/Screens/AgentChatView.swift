@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-import GoogleGenerativeAI
+// Remaining imports not needed for backend chat
 
 struct Message: Identifiable, Equatable {
     let id = UUID()
@@ -20,7 +20,7 @@ struct Message: Identifiable, Equatable {
 
 struct AgentChatView: View {
     @Environment(\.dismiss) private var dismiss
-    private let aiService = AIService.shared
+    private let analyticsService = AnalyticsService.shared
     @State private var inputText = ""
     @State private var messages: [Message] = [
         Message(text: "Hello! I'm Unitrack AI. How can I help you analyze your portfolio today?", isUser: false)
@@ -139,51 +139,23 @@ struct AgentChatView: View {
         let userText = inputText
         let userMessage = Message(text: userText, isUser: true)
         messages.append(userMessage)
-        _ = inputText // Keep compiler happy if needed, but we clear below
         inputText = ""
         
         isTyping = true
         
-        // Prepare context
-        // In a real app, we'd inject the portfolio snapshot here as a system prompt or first message
-        let history = messages.dropLast().map { $0.asModelContent } // Exclude the message we just added? No, usually include prior history. 
-        // Wait, startChat(history:) expects prior history. The new message is sent via sendMessageStream.
-        // So history should include everything BEFORE the current user message.
-        
         Task {
-            var fullResponse = ""
-            let responseID = UUID()
-            
-            // Add a placeholder/empty message for the AI that we will update live
-            // We can't easily mutate a struct in an array efficiently for streaming character by character 
-            // without causing massive redraws, but for this MVP we'll try appending chunks.
-            // Better approach: Wait for first chunk to stop "isTyping", then append AI message, then update it.
-            
             do {
-                let stream = aiService.streamChat(message: userText, history: history)
+                let response = try await analyticsService.chat(message: userText)
                 
-                var hasStartedResponding = false
-                
-                for try await chunk in stream {
-                    if !hasStartedResponding {
-                        isTyping = false
-                        hasStartedResponding = true
-                        // Add initial AI message
-                        let aiMessage = Message(text: chunk, isUser: false)
-                        messages.append(aiMessage)
-                        fullResponse += chunk
-                    } else {
-                        // Update last message
-                        fullResponse += chunk
-                        if let lastIdx = messages.indices.last {
-                            // Swift structs... we need to replace the item
-                             messages[lastIdx] = Message(text: fullResponse, isUser: false)
-                        }
-                    }
+                await MainActor.run {
+                    isTyping = false
+                    messages.append(Message(text: response, isUser: false))
                 }
             } catch {
-                isTyping = false
-                messages.append(Message(text: "Sorry, I encountered an error: \(error.localizedDescription)", isUser: false))
+                await MainActor.run {
+                    isTyping = false
+                    messages.append(Message(text: "Sorry, I encountered an error: \(error.localizedDescription)", isUser: false))
+                }
             }
         }
     }

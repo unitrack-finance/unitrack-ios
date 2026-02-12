@@ -7,43 +7,126 @@
 
 import SwiftUI
 
-struct AssetsView: View {
+struct MarketOverviewView: View {
     @State var searchTerm = ""
+    @State private var searchResults: [MarketSearchResult] = []
+    @State private var isSearching = false
+    @State private var searchError: String?
+    
+    // Placeholder stats for the UI
     private let stats: [StatItem] = [
-        .init(title: "Best Performer", subtitle: "AAPL", value: "+4.8%", icon: "arrow.up.right.circle.fill", isPositive: true),
-        .init(title: "Worst Performer", subtitle: "ETH", value: "-2.1%", icon: "arrow.down.right.circle.fill", isPositive: false),
-        .init(title: "Top Holding", subtitle: "VTI", value: "$18,420", icon: "star.circle.fill", isPositive: true),
-        .init(title: "Top Mover", subtitle: "BTC", value: "+17.6%", icon: "chart.bar.fill", isPositive: true)
+        .init(id: UUID().uuidString, title: "Best Performer", subtitle: "AAPL", value: "+4.8%", icon: "arrow.up.right.circle.fill", isPositive: true),
+        .init(id: UUID().uuidString, title: "Worst Performer", subtitle: "ETH", value: "-2.1%", icon: "arrow.down.right.circle.fill", isPositive: false)
     ]
-    private let assets: [Asset] = [
-        .init(ticker: "MSFT", name: "Microsoft", price: "$292.66", imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png?t=1722952497"),
-        .init(ticker: "ETH", name: "Ethereum", price: "$2077.25", imageUrl: "https://cdn.pixabay.com/photo/2021/05/24/09/15/ethereum-logo-6278329_1280.png"),
-        .init(ticker: "AAPL", name: "Apple", price: "$456.87", imageUrl: "https://g.foolcdn.com/art/companylogos/square/aapl.png"),
-        .init(ticker: "DOW", name: "Dow Jones", price: "$26,598.12", imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSMU2Zf9sCjK9NFBEIy3OAiD7AqEy1_vXv4pg&s")
-    ]
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    HStack{
+                    HStack {
                         Text("Search")
                             .customFont(.title)
                         Spacer()
                     }
+                    
                     TextField("", text: $searchTerm)
                         .customTextField(image: Image(systemName: "magnifyingglass"))
                         .foregroundStyle(Color.gray)
                         .textInputAutocapitalization(.never)
-                    SuggestedStatsSection(stats: stats)
-                    MostSearchedAssets(assets: assets)
-                        
+                        .onSubmit {
+                            performSearch()
+                        }
+                    
+                    if isSearching {
+                        ProgressView()
+                            .padding()
+                    } else if let error = searchError {
+                        Text(error)
+                            .customFont(.caption)
+                            .foregroundStyle(.red)
+                    } else if !searchResults.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Market Results")
+                                .customFont(.subheadline)
+                                .opacity(0.5)
+                            
+                            ForEach(searchResults) { result in
+                                NavigationLink(destination: MarketAssetDetailView(ticker: result.ticker)) {
+                                    MarketResultRow(result: result)
+                                }
+                            }
+                        }
+                    } else {
+                        SuggestedStatsSection(stats: stats)
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
                 .padding(.bottom, 50)
             }
             .scrollIndicators(.hidden)
+            .alert("Search Error", isPresented: Binding(
+                get: { searchError != nil },
+                set: { if !$0 { searchError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(searchError ?? "An unknown error occurred")
+            }
         }
+    }
+    
+    private func performSearch() {
+        guard !searchTerm.isEmpty else { return }
+        isSearching = true
+        searchError = nil
+        
+        Task {
+            do {
+                let results = try await MarketService.shared.search(query: searchTerm)
+                await MainActor.run {
+                    self.searchResults = results
+                    self.isSearching = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.searchError = error.userFriendlyMessage
+                    self.isSearching = false
+                }
+            }
+        }
+    }
+}
+
+private struct MarketResultRow: View {
+    let result: MarketSearchResult
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            AsyncImage(url: URL(string: result.logoUrl ?? "")) { image in
+                image.resizable()
+            } placeholder: {
+                Circle().fill(Color.cardBackgroundSecondary)
+            }
+            .frame(width: 44, height: 44)
+            .clipShape(Circle())
+            
+            VStack(alignment: .leading) {
+                Text(result.ticker)
+                    .customFont(.headline)
+                Text(result.name)
+                    .customFont(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(result.type)
+                .customFont(.caption2)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.cardBackgroundSecondary, in: Capsule())
+        }
+        .padding()
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -70,7 +153,7 @@ private struct SuggestedStatsSection: View {
     }
 }
 
-private struct AssetCard: View {
+private struct MarketAssetCard: View {
     let item: Asset
     var body: some View {
         VStack(alignment: .leading) {
@@ -103,7 +186,7 @@ private struct AssetCard: View {
     }
 }
 
-private struct MostSearchedAssets: View {
+private struct MarketMostSearchedAssets: View {
     let assets: [Asset]
     
     var body: some View {
@@ -116,7 +199,7 @@ private struct MostSearchedAssets: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(assets) { item in
-                    AssetCard(item: item)
+                    MarketAssetCard(item: item)
                 }
             }
             
@@ -126,5 +209,5 @@ private struct MostSearchedAssets: View {
 
 
 #Preview {
-    AssetsView()
+    MarketOverviewView()
 }

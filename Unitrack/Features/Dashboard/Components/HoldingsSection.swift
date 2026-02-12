@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HoldingsSection: View {
     let holdings: [HoldingItem]
+    @State private var selectedHolding: HoldingItem?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -24,8 +25,18 @@ struct HoldingsSection: View {
 
             VStack(spacing: 10) {
                 ForEach(holdings) { holding in
-                    HoldingRow(item: holding)
+                    Button {
+                        selectedHolding = holding
+                    } label: {
+                        HoldingRow(item: holding)
+                    }
+                    .buttonStyle(.plain)
                 }
+            }
+        }
+        .sheet(item: $selectedHolding) { holding in
+            EditManualAssetView(asset: holding) {
+                // Refresh data if needed, DashboardViewModel handles this via onAppear or sync
             }
         }
     }

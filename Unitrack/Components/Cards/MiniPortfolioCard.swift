@@ -23,7 +23,7 @@ struct MiniPortfolioCard: View {
             
             Spacer()
             
-            Text(portfolio.balance)
+            Text(portfolio.balanceFormatted)
                 .customFont(.headline)
                 .foregroundStyle(Color.textPrimary)
             

@@ -54,7 +54,6 @@ struct PortfolioTypeCard: View {
                     .foregroundStyle(Color.textTertiary)
             }
             .padding(16)
-            .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
 }
