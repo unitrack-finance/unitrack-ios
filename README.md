@@ -1,7 +1,5 @@
 # Unitrack – The Intelligent Wealth OS
 
-![Unitrack Banner](https://via.placeholder.com/800x400.png?text=Unitrack+-+The+Intelligent+Wealth+OS)
-
 Unitrack is a high-fidelity wealth management and portfolio analytics platform for iOS, designed for the modern investor who balances traditional assets, digital currencies, and physical investments.
 
 ## 📚 Documentation
