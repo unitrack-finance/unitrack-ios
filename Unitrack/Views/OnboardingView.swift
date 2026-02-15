@@ -20,7 +20,6 @@ struct OnboardingView: View {
                 
                 content
                     .offset(y: showModal ? 50 : 0)
-                
                 Color("Shadow")
                     .opacity(showModal ? 0.4 : 0)
                     .ignoresSafeArea()
