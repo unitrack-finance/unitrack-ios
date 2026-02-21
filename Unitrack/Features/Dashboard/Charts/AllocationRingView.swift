@@ -27,17 +27,20 @@ struct AllocationRingView: View {
             }
         .chartBackground { chartProxy in
             GeometryReader { geometry in
-                let frame = geometry[chartProxy.plotAreaFrame]
-                VStack {
-                    Text("Largest Position")
-                        .customFont(.caption2)
-                        .foregroundStyle(Color.textSecondary)
-                    if let largest = largestPositionItem {
-                        Text(largest.name)
-                            .customFont(.headline)
+                if let plotFrame = chartProxy.plotFrame {
+                    let frame = geometry[plotFrame]
+                    VStack {
+                        Text("Largest Position")
+                            .customFont(.caption2)
+                            .foregroundStyle(Color.textSecondary)
+                        if let largest = largestPositionItem {
+                            Text(largest.name)
+                                .customFont(.headline)
+                        }
                     }
+                    .position(x: frame.midX, y: frame.midY)
                 }
-                .position(x: frame.midX, y:frame.midY)
             }
-        }        }
+        }
+    }
 }

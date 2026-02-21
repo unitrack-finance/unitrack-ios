@@ -232,11 +232,10 @@ extension UIApplication {
     static func topViewController(base: UIViewController? = {
         if let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
-            .first(where: { $0.activationState == .foregroundActive }),
-           let window = scene.windows.first(where: { $0.isKeyWindow }) {
-            return window.rootViewController
+            .first(where: { $0.activationState == .foregroundActive }) {
+            return scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
         }
-        return UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController
+        return nil
     }()) -> UIViewController? {
         if let nav = base as? UINavigationController {
             return topViewController(base: nav.visibleViewController)

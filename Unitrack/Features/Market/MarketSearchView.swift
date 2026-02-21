@@ -43,7 +43,7 @@ struct MarketSearchView: View {
             }
             .navigationTitle("Market Search")
             .searchable(text: $searchText, prompt: "Search stocks, crypto...")
-            .onChange(of: searchText) { newValue in
+            .onChange(of: searchText) { newValue, _ in
                 if newValue.isEmpty {
                     results = []
                 } else {
