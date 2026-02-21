@@ -60,7 +60,7 @@ struct SigninView: View {
                 isLoading = false
                 isShowingErrorAnimation = true
                 check.triggerInput("Error")
-                errorMessage = readableMessage(from: error)
+                errorMessage = "Bad Request: Invalid email or password. Please try again."
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     showingErrorAlert = true
