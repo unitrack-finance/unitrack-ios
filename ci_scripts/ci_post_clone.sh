@@ -2,13 +2,13 @@
 
 # ci_post_clone.sh - Generate Secrets.xcconfig from Xcode Cloud env vars
 
-set -e  # Exit on any error
+set -e  # Exit on error
 
 echo "Generating Secrets.xcconfig from environment variables..."
 
-cd "$CI_WORKSPACE" || cd /Volumes/workspace/repository || { echo "Failed to cd to repo root"; exit 1; }
+REPO_ROOT="/Volumes/workspace/repository"
 
-cat > Secrets.xcconfig << EOL
+cat > "$REPO_ROOT/Secrets.xcconfig" << EOL
 //
 //  Secrets.xcconfig
 //  Unitrack
@@ -20,8 +20,12 @@ REVENUE_CAT_KEY = ${REVENUE_CAT_KEY:-}
 GEMINI_API_KEY = ${GEMINI_API_KEY:-}
 EOL
 
-echo "Generated Secrets.xcconfig in repo root:"
-ls -l Secrets.xcconfig
-cat Secrets.xcconfig | sed 's/=.*/= [REDACTED]/'
-
-echo "Current directory after generation: $(pwd)"
+if [ -f "$REPO_ROOT/Secrets.xcconfig" ]; then
+    echo "Secrets.xcconfig successfully created in repo root:"
+    ls -l "$REPO_ROOT/Secrets.xcconfig"
+    cat "$REPO_ROOT/Secrets.xcconfig" | sed 's/=.*/= [REDACTED]/'  # Safe log
+    echo "Current directory (should still be ci_scripts): $(pwd)"
+else
+    echo "Failed to create Secrets.xcconfig in $REPO_ROOT"
+    exit 1
+fi
